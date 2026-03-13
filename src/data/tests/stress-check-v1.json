@@ -1,0 +1,71 @@
+{
+  "id": "stress-check-v1",
+  "titleKey": "tests.stressCheck.title",
+  "descriptionKey": "tests.stressCheck.description",
+  "estimatedMinutes": 3,
+  "questions": [
+    {
+      "id": "q1",
+      "promptKey": "tests.stressCheck.questions.q1",
+      "options": [
+        { "id": "never", "labelKey": "tests.common.options.never", "score": 0 },
+        { "id": "sometimes", "labelKey": "tests.common.options.sometimes", "score": 1 },
+        { "id": "often", "labelKey": "tests.common.options.often", "score": 2 },
+        { "id": "almost_always", "labelKey": "tests.common.options.almostAlways", "score": 3 }
+      ]
+    },
+    {
+      "id": "q2",
+      "promptKey": "tests.stressCheck.questions.q2",
+      "options": [
+        { "id": "never", "labelKey": "tests.common.options.never", "score": 0 },
+        { "id": "sometimes", "labelKey": "tests.common.options.sometimes", "score": 1 },
+        { "id": "often", "labelKey": "tests.common.options.often", "score": 2 },
+        { "id": "almost_always", "labelKey": "tests.common.options.almostAlways", "score": 3 }
+      ]
+    },
+    {
+      "id": "q3",
+      "promptKey": "tests.stressCheck.questions.q3",
+      "options": [
+        { "id": "never", "labelKey": "tests.common.options.never", "score": 0 },
+        { "id": "sometimes", "labelKey": "tests.common.options.sometimes", "score": 1 },
+        { "id": "often", "labelKey": "tests.common.options.often", "score": 2 },
+        { "id": "almost_always", "labelKey": "tests.common.options.almostAlways", "score": 3 }
+      ]
+    },
+    {
+      "id": "q4",
+      "promptKey": "tests.stressCheck.questions.q4",
+      "options": [
+        { "id": "never", "labelKey": "tests.common.options.never", "score": 0 },
+        { "id": "sometimes", "labelKey": "tests.common.options.sometimes", "score": 1 },
+        { "id": "often", "labelKey": "tests.common.options.often", "score": 2 },
+        { "id": "almost_always", "labelKey": "tests.common.options.almostAlways", "score": 3 }
+      ]
+    }
+  ],
+  "resultBands": [
+    {
+      "id": "low",
+      "minInclusive": 0,
+      "maxInclusive": 3,
+      "labelKey": "tests.stressCheck.results.low.label",
+      "adviceKey": "tests.stressCheck.results.low.advice"
+    },
+    {
+      "id": "moderate",
+      "minInclusive": 4,
+      "maxInclusive": 8,
+      "labelKey": "tests.stressCheck.results.moderate.label",
+      "adviceKey": "tests.stressCheck.results.moderate.advice"
+    },
+    {
+      "id": "high",
+      "minInclusive": 9,
+      "maxInclusive": 12,
+      "labelKey": "tests.stressCheck.results.high.label",
+      "adviceKey": "tests.stressCheck.results.high.advice"
+    }
+  ]
+}
