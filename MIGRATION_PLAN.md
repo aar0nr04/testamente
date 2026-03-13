@@ -98,3 +98,10 @@
 - Admin tools for test management
 - Advanced visualization for progress trends
 - Full parity pass vs Android domain behavior
+
+
+## 8) Added post-MVP updates
+
+- Locale handling moved to a shared provider to mimic app-wide Android resource configuration changes.
+- Introduced local results history (`/history`) as a web equivalent of a persisted results/list screen.
+- Added a result storage module to isolate persistence concerns before moving to Firestore-backed repositories.

@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
+import { HistoryPage } from '../pages/HistoryPage';
 import { HomePage } from '../pages/HomePage';
 import { LoginPage } from '../pages/LoginPage';
 import { ResultPage } from '../pages/ResultPage';
@@ -15,6 +16,7 @@ export function App() {
         <Route path="tests" element={<TestCatalogPage />} />
         <Route path="tests/:testId" element={<TestRunnerPage />} />
         <Route path="results/:resultId" element={<ResultPage />} />
+        <Route path="history" element={<HistoryPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

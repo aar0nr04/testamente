@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { getTestById } from '../data/tests';
 import { calculateResult } from '../engine/testEngine';
 import { useLocale } from '../hooks/useLocale';
+import { saveResult } from '../lib/resultStore';
 
 export function TestRunnerPage() {
   const { testId = '' } = useParams();
@@ -11,13 +12,14 @@ export function TestRunnerPage() {
   const navigate = useNavigate();
   const { t } = useLocale();
 
-  if (!test) return <p>Test not found.</p>;
+  if (!test) return <p>{t('test.notFound')}</p>;
 
   function onSubmit(event: FormEvent) {
     event.preventDefault();
     const result = calculateResult(test, answers);
-    sessionStorage.setItem(`testamente:result:${result.id}`, JSON.stringify(result));
-    navigate(`/results/${result.id}?testId=${test.id}`);
+
+    saveResult(result);
+    navigate(`/results/${result.id}`);
   }
 
   return (

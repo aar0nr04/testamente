@@ -1,24 +1,17 @@
 import { useMemo } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { getTestById } from '../data/tests';
 import { useLocale } from '../hooks/useLocale';
-import type { TestRunResult } from '../types/test';
+import { findResultById } from '../lib/resultStore';
 
 export function ResultPage() {
   const { resultId = '' } = useParams();
-  const [searchParams] = useSearchParams();
-  const testId = searchParams.get('testId') ?? '';
   const { t } = useLocale();
 
-  const result = useMemo(() => {
-    const raw = sessionStorage.getItem(`testamente:result:${resultId}`);
-    if (!raw) return undefined;
-    return JSON.parse(raw) as TestRunResult;
-  }, [resultId]);
+  const result = useMemo(() => findResultById(resultId), [resultId]);
+  const test = useMemo(() => getTestById(result?.testId ?? ''), [result?.testId]);
 
-  const test = useMemo(() => getTestById(testId), [testId]);
-
-  if (!result || !test) return <p>Result not found.</p>;
+  if (!result || !test) return <p>{t('result.notFound')}</p>;
 
   const band = test.resultBands.find((item) => item.id === result.bandId);
 
@@ -33,9 +26,14 @@ export function ResultPage() {
       <small>
         {t('result.done')}: {new Date(result.completedAt).toLocaleString()}
       </small>
-      <Link to="/tests" className="button-link">
-        Back to tests
-      </Link>
+      <div className="row-gap">
+        <Link to="/tests" className="button-link">
+          {t('result.backToTests')}
+        </Link>
+        <Link to="/history" className="button-link">
+          {t('result.viewHistory')}
+        </Link>
+      </div>
     </section>
   );
 }
