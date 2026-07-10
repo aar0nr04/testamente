@@ -1,0 +1,8 @@
+{
+  "indexes": [
+    { "collectionGroup": "testResults", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "completedAt", "order": "DESCENDING" }] },
+    { "collectionGroup": "appointments", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "participantIds", "arrayConfig": "CONTAINS" }, { "fieldPath": "startTime", "order": "ASCENDING" }] },
+    { "collectionGroup": "messages", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "createdAt", "order": "DESCENDING" }] }
+  ],
+  "fieldOverrides": []
+}

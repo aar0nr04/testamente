@@ -1,16 +1,2 @@
-import { Link } from 'react-router-dom';
-import { useLocale } from '../hooks/useLocale';
-
-export function HomePage() {
-  const { t } = useLocale();
-
-  return (
-    <section className="stack">
-      <h2>Testamente</h2>
-      <p>{t('app.subtitle')}</p>
-      <Link to="/tests" className="button-link">
-        {t('home.cta')}
-      </Link>
-    </section>
-  );
-}
+import { Link } from 'react-router-dom'; import { useAuth } from '../contexts/AuthContext';
+export function HomePage() { const { user } = useAuth(); return <section className="hero-section"><div className="hero-copy"><span className="eyebrow">Bienestar con contexto</span><h1>Conoce tus señales. Decide tu siguiente paso.</h1><p>Autoevaluaciones breves, resultados privados y acceso a apoyo profesional cuando lo necesites.</p><div className="row-gap"><Link to="/tests" className="button-link">Explorar tests</Link>{!user ? <Link to="/login" className="button-link secondary">Crear cuenta</Link> : null}</div></div><div className="hero-card"><span className="hero-icon">✦</span><h2>Una experiencia más humana</h2><p>Tu información sensible se trata con cuidado. La app no diagnostica y no comparte tus respuestas con Analytics.</p></div><div className="feature-grid"><article><strong>01</strong><h2>Explora</h2><p>Encuentra instrumentos por tema, duración e idioma.</p></article><article><strong>02</strong><h2>Responde</h2><p>Una pregunta a la vez, con progreso claro y accesible.</p></article><article><strong>03</strong><h2>Comprende</h2><p>Consulta resultados informativos y próximos pasos.</p></article></div></section>; }

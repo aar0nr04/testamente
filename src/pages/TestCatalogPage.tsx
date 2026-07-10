@@ -1,21 +1,3 @@
-import { TestCard } from '../components/tests/TestCard';
-import { testsCatalog } from '../data/tests';
-import { useLocale } from '../hooks/useLocale';
-
-export function TestCatalogPage() {
-  const { t } = useLocale();
-
-  return (
-    <section className="stack">
-      <header className="row-between">
-        <h2>{t('catalog.title')}</h2>
-      </header>
-      {testsCatalog.length === 0 ? <p>{t('catalog.empty')}</p> : null}
-      <div className="grid">
-        {testsCatalog.map((test) => (
-          <TestCard key={test.id} test={test} t={t} />
-        ))}
-      </div>
-    </section>
-  );
-}
+import { useMemo, useState } from 'react'; import { Link } from 'react-router-dom'; import { getCatalogForLocale } from '../data/tests'; import { useLocale } from '../hooks/useLocale';
+export function TestCatalogPage() { const { locale } = useLocale(); const [query, setQuery] = useState(''); const tests = useMemo(() => getCatalogForLocale(locale).filter((test) => `${test.title} ${test.description} ${(test.tags ?? []).join(' ')}`.toLowerCase().includes(query.toLowerCase())), [locale, query]); return <section className="stack"><div className="page-heading"><div><span className="eyebrow">Explora</span><h1>Catálogo de tests</h1><p>Instrumentos disponibles para el idioma activo y la revisión profesional.</p></div><input className="search" placeholder="Buscar por nombre o tema" value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Buscar tests" /></div><div className="notice">Los tests son herramientas informativas o de cribado; no equivalen a un diagnóstico clínico.</div><div className="catalog-groups"><div><h3>Disponibles ahora</h3><div className="grid">{tests.filter((test) => test.payloadAvailable).map((test) => <article className="card test-card" key={test.id}><div className="card-meta"><span>{test.estimatedMinutes} min</span><span>•</span><span>{test.questionCount ?? test.questions.length} preguntas</span></div><h2>{test.title}</h2><p>{test.description}</p><div className="tag-row">{(test.tags ?? []).slice(0, 3).map((tag) => <span key={tag} className="tag">{tag}</span>)}</div><Link to={`/tests/${test.id}`} className="button-link">Ver detalle</Link></article>)}</div></div><div><h3>Revisión profesional</h3><div className="grid">{testsCatalogReview(tests).map((test) => <article className="card locked-card" key={test.id}><span className="eyebrow">{test.licenseLabel}</span><h2>{test.title}</h2><p>{test.description}</p><small>Payload protegido. Requiere allowlist y backend de revisión.</small></article>)}</div></div></div></section>; }
+function testsCatalogReview(tests: ReturnType<typeof getCatalogForLocale>) { return tests.filter((test) => !test.payloadAvailable); }

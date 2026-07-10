@@ -9,8 +9,8 @@ interface TestCardProps {
 export function TestCard({ test, t }: TestCardProps) {
   return (
     <article className="card">
-      <h3>{t(test.titleKey)}</h3>
-      <p>{t(test.descriptionKey)}</p>
+      <h3>{test.title ?? (test.titleKey ? t(test.titleKey) : test.id)}</h3>
+      <p>{test.description ?? (test.descriptionKey ? t(test.descriptionKey) : '')}</p>
       <small>{test.estimatedMinutes} min</small>
       <Link to={`/tests/${test.id}`} className="button-link">
         {t('test.start')}

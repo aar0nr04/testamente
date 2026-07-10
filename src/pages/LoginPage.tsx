@@ -1,30 +1,4 @@
-import { FormEvent, useState } from 'react';
-import { useLocale } from '../hooks/useLocale';
-
-export function LoginPage() {
-  const { t } = useLocale();
-  const [email, setEmail] = useState('');
-
-  function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    localStorage.setItem('testamente:user', email);
-  }
-
-  return (
-    <section className="stack">
-      <h2>{t('login.title')}</h2>
-      <p>{t('login.description')}</p>
-      <form className="stack" onSubmit={handleSubmit}>
-        <label>
-          {t('login.email')}
-          <input value={email} type="email" required onChange={(event) => setEmail(event.target.value)} />
-        </label>
-        <label>
-          {t('login.password')}
-          <input type="password" required />
-        </label>
-        <button type="submit">{t('login.submit')}</button>
-      </form>
-    </section>
-  );
-}
+import { FormEvent, useState } from 'react'; import { Link, useLocation, useNavigate } from 'react-router-dom'; import { useAuth } from '../contexts/AuthContext';
+export function LoginPage() { const { login, loginWithGoogle, resetPassword } = useAuth(); const [email, setEmail] = useState(''); const [password, setPassword] = useState(''); const [mode, setMode] = useState<'login'|'register'>('login'); const [role, setRole] = useState<'patient'|'psychologist'>('patient'); const [name, setName] = useState(''); const [terms, setTerms] = useState(false); const [error, setError] = useState(''); const [busy, setBusy] = useState(false); const navigate = useNavigate(); const location = useLocation(); const from = (location.state as { from?: string } | null)?.from ?? '/'; const auth = useAuth();
+  async function submit(event: FormEvent) { event.preventDefault(); setBusy(true); setError(''); try { if (mode === 'login') await login(email, password); else await auth.register({ email, password, name, role, termsAccepted: terms, termsVersion: '2026-01' }); navigate(from); } catch (err) { setError(err instanceof Error ? err.message : 'No se pudo completar la operación.'); } finally { setBusy(false); } }
+  return <section className="auth-grid"><div className="auth-intro"><span className="eyebrow">Testamente</span><h1>{mode === 'login' ? 'Tu bienestar, con contexto.' : 'Crea tu cuenta segura.'}</h1><p>Explora autoevaluaciones informativas y conserva tus resultados con privacidad y control.</p><ul className="check-list"><li>Autenticación Firebase y correo verificado</li><li>Resultados privados y sin datos en Analytics</li><li>Orientación general, nunca diagnóstico</li></ul></div><form className="panel stack" onSubmit={(event) => void submit(event)}><h2>{mode === 'login' ? 'Iniciar sesión' : 'Registrarte'}</h2>{error ? <p className="error" role="alert">{error}</p> : null}{mode === 'register' ? <><label>Nombre<input value={name} required onChange={(event) => setName(event.target.value)} /></label><label>Tipo de cuenta<select value={role} onChange={(event) => setRole(event.target.value as 'patient'|'psychologist')}><option value="patient">Paciente</option><option value="psychologist">Psicólogo/a</option></select></label></> : null}<label>Correo<input type="email" required autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} /></label><label>Contraseña<input type="password" required minLength={6} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} value={password} onChange={(event) => setPassword(event.target.value)} /></label>{mode === 'register' ? <label className="checkbox"><input type="checkbox" checked={terms} onChange={(event) => setTerms(event.target.checked)} required /> Acepto los términos y la política de privacidad.</label> : null}<button disabled={busy}>{busy ? 'Procesando…' : mode === 'login' ? 'Entrar' : 'Crear cuenta'}</button>{mode === 'login' ? <button type="button" className="secondary" onClick={() => void loginWithGoogle().then(() => navigate(from)).catch((err: unknown) => setError(err instanceof Error ? err.message : 'No se pudo iniciar con Google.'))}>Continuar con Google</button> : null}<div className="row-between"><button type="button" className="link-button" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>{mode === 'login' ? 'Crear cuenta' : 'Ya tengo cuenta'}</button>{mode === 'login' ? <button type="button" className="link-button" onClick={() => { const target = window.prompt('Correo para recuperar contraseña', email); if (target) void resetPassword(target).catch((err: unknown) => setError(err instanceof Error ? err.message : 'No se pudo enviar el correo.')); }}>¿Olvidaste tu contraseña?</button> : null}</div><Link to="/tests" className="muted">Explorar sin iniciar sesión</Link></form></section>; }

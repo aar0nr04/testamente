@@ -1,0 +1,270 @@
+{
+  "version": 1,
+  "updatedAt": "2025-10-02T12:00:00Z",
+
+  "taxonomy": {
+    "groups": [
+      {
+        "id": "clinicos",
+        "title": { "es": "Clínicos", "en": "Clinical" },
+        "categories": [
+          {
+            "id": "autoestima-bienestar",
+            "title": { "es": "Autoestima / Bienestar", "en": "Self-esteem / Well-being" },
+            "subcategories": [
+              { "id": "autoestima", "title": { "es": "Autoestima", "en": "Self-esteem" } },
+              { "id": "satisfaccion-vida", "title": { "es": "Satisfacción con la vida", "en": "Life Satisfaction" } },
+              { "id": "bienestar-psicologico", "title": { "es": "Bienestar psicológico", "en": "Psychological Well-being" } },
+              { "id": "felicidad-subjetiva", "title": { "es": "Felicidad subjetiva", "en": "Subjective Happiness" } }
+            ]
+          },
+          {
+            "id": "ansiedad-estres",
+            "title": { "es": "Ansiedad / Estrés", "en": "Anxiety / Stress" },
+            "subcategories": [
+              { "id": "ansiedad-general", "title": { "es": "Ansiedad general", "en": "General Anxiety" } },
+              { "id": "ansiedad-estado-rasgo", "title": { "es": "Ansiedad estado-rasgo", "en": "State-Trait Anxiety" } },
+              { "id": "estres-percibido", "title": { "es": "Estrés percibido", "en": "Perceived Stress" } }
+            ]
+          },
+          {
+            "id": "depresion",
+            "title": { "es": "Depresión", "en": "Depression" },
+            "subcategories": [
+              { "id": "cribado", "title": { "es": "Cribado", "en": "Screening" } },
+              { "id": "sintomatologia", "title": { "es": "Sintomatología", "en": "Symptomatology" } }
+            ]
+          },
+          {
+            "id": "personalidad",
+            "title": { "es": "Personalidad", "en": "Personality" },
+            "subcategories": [
+              { "id": "bigfive", "title": { "es": "Big Five", "en": "Big Five" } },
+              { "id": "eysenck", "title": { "es": "Eysenck", "en": "Eysenck" } }
+            ]
+          },
+          {
+            "id": "cognicion-atencion",
+            "title": { "es": "Cognición / Atención", "en": "Cognition / Attention" },
+            "subcategories": [
+              { "id": "funcion-ejecutiva", "title": { "es": "Función ejecutiva", "en": "Executive Function" } },
+              { "id": "memoria-trabajo", "title": { "es": "Memoria de trabajo", "en": "Working Memory" } }
+            ]
+          },
+          {
+            "id": "resiliencia-afrontamiento",
+            "title": { "es": "Resiliencia / Afrontamiento", "en": "Resilience / Coping" },
+            "subcategories": [
+              { "id": "resiliencia", "title": { "es": "Resiliencia", "en": "Resilience" } },
+              { "id": "estilos-afrontamiento", "title": { "es": "Estilos de afrontamiento", "en": "Coping Styles" } }
+            ]
+          },
+          {
+            "id": "salud-mental-general",
+            "title": { "es": "Salud Mental General", "en": "General Mental Health" },
+            "subcategories": [
+              { "id": "ghq", "title": { "es": "GHQ / general", "en": "GHQ / general" } }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  "tests": [
+    {
+      "slug": "amas-a",
+      "title": { "es": "AMAS-A Ansiedad", "en": "AMAS-A Anxiety" },
+      "summary": {
+        "es": "Inventario de ansiedad con subescalas IHS, FIS, SOC, M y total (T).",
+        "en": "Anxiety inventory: IHS, FIS, SOC, Lie (M) and Total (T) subscales."
+      },
+      "group": "clinicos",
+      "category": "ansiedad-estres",
+      "subcategory": "ansiedad-general",
+      "tags": ["ansiedad","amas-a","screening"],
+      "latestVersion": "v1",
+      "locales": ["es"],
+      "durationMin": 4,
+      "questionCount": 36,
+      "access": "free",
+      "license": "restricted-or-requires-permission"
+    },
+    {
+      "slug": "rosenberg-self-esteem",
+      "title": { "es": "Escala de Autoestima de Rosenberg (RSES)", "en": "Rosenberg Self-Esteem Scale" },
+      "summary": { "es": "Autoestima global.", "en": "Global self-esteem." },
+      "group": "clinicos",
+      "category": "autoestima-bienestar",
+      "subcategory": "autoestima",
+      "tags": ["autoestima","screening"],
+      "latestVersion": "v1",
+      "locales": ["es"],
+      "durationMin": 3,
+      "questionCount": 10,
+      "access": "free",
+      "license": "public-domain-or-perms"
+    },
+    {
+      "slug": "swls-life-satisfaction",
+      "title": { "es": "Satisfacción con la Vida (SWLS)", "en": "Satisfaction With Life Scale" },
+      "summary": { "es": "Evaluación global de satisfacción con la vida.", "en": "Global life satisfaction." },
+      "group": "clinicos",
+      "category": "autoestima-bienestar",
+      "subcategory": "satisfaccion-vida",
+      "tags": ["bienestar","satisfaccion"],
+      "latestVersion": "v1",
+      "locales": ["es"],
+      "durationMin": 3,
+      "questionCount": 5,
+      "access": "free",
+      "license": "public-domain-or-perms"
+    },
+    {
+      "slug": "subjective-happiness-scale",
+      "title": { "es": "Escala de Felicidad Subjetiva", "en": "Subjective Happiness Scale" },
+      "summary": { "es": "Felicidad subjetiva.", "en": "Subjective happiness." },
+      "group": "clinicos",
+      "category": "autoestima-bienestar",
+      "subcategory": "felicidad-subjetiva",
+      "tags": ["felicidad","bienestar"],
+      "latestVersion": "v1",
+      "locales": ["es"],
+      "durationMin": 3,
+      "questionCount": 4,
+      "access": "free",
+      "license": "public-domain-or-perms"
+    },
+    {
+      "slug": "ryff-psychological-wellbeing",
+      "title": { "es": "Bienestar Psicológico de Ryff", "en": "Ryff Psychological Well-Being" },
+      "summary": { "es": "Dimensiones de bienestar psicológico.", "en": "Psychological well-being dimensions." },
+      "group": "clinicos",
+      "category": "autoestima-bienestar",
+      "subcategory": "bienestar-psicologico",
+      "tags": ["bienestar","eudaimonia"],
+      "latestVersion": "v1",
+      "locales": ["es"],
+      "durationMin": 8,
+      "questionCount": 18,
+      "access": "free",
+      "license": "public-domain-or-perms"
+    },
+
+    { "slug": "bai-beck-anxiety", "title": { "es": "Inventario de Ansiedad de Beck (BAI)", "en": "Beck Anxiety Inventory" },
+      "summary": { "es": "Síntomas de ansiedad (versiones libres).", "en": "Anxiety symptoms (free versions)." },
+      "group": "clinicos", "category": "ansiedad-estres", "subcategory": "ansiedad-general",
+      "tags": ["ansiedad","síntomas"], "latestVersion": "v1", "locales": ["es"],
+      "durationMin": 5, "questionCount": 21, "access": "free", "license": "public-domain-or-perms"
+    },
+    { "slug": "stai-state-trait", "title": { "es": "STAI Estado-Rasgo (preliminar)", "en": "STAI State-Trait (prelim.)" },
+      "summary": { "es": "Ansiedad estado y rasgo (versiones libres).", "en": "State and trait anxiety." },
+      "group": "clinicos", "category": "ansiedad-estres", "subcategory": "ansiedad-estado-rasgo",
+      "tags": ["ansiedad","estado","rasgo"], "latestVersion": "v1", "locales": ["es"],
+      "durationMin": 8, "questionCount": 40, "access": "free", "license": "public-domain-or-perms"
+    },
+    { "slug": "gad-7",
+      "title": { "es": "GAD-7 Ansiedad Generalizada", "en": "GAD-7 Generalized Anxiety" },
+      "summary": { "es": "Cribado de ansiedad generalizada.", "en": "Anxiety screening." },
+      "group": "clinicos", "category": "ansiedad-estres", "subcategory": "ansiedad-general",
+      "tags": ["ansiedad","cribado"], "latestVersion": "v1", "locales": ["es"],
+      "durationMin": 2, "questionCount": 7, "access": "free", "license": "public-domain-or-perms"
+    },
+    { "slug": "pss-perceived-stress",
+      "title": { "es": "Escala de Estrés Percibido (PSS)", "en": "Perceived Stress Scale" },
+      "summary": { "es": "Estrés percibido último mes.", "en": "Perceived stress last month." },
+      "group": "clinicos", "category": "ansiedad-estres", "subcategory": "estres-percibido",
+      "tags": ["estrés","percepción"], "latestVersion": "v1", "locales": ["es"],
+      "durationMin": 3, "questionCount": 10, "access": "free", "license": "public-domain-or-perms"
+    },
+
+    { "slug": "zung-sds",
+      "title": { "es": "Escala de Depresión de Zung (SDS)", "en": "Zung Self-Rating Depression" },
+      "summary": { "es": "Severidad de síntomas depresivos.", "en": "Depression symptoms severity." },
+      "group": "clinicos", "category": "depresion", "subcategory": "sintomatologia",
+      "tags": ["depresion"], "latestVersion": "v1", "locales": ["es"],
+      "durationMin": 4, "questionCount": 20, "access": "free", "license": "public-domain-or-perms"
+    },
+    { "slug": "phq-9",
+      "title": { "es": "PHQ-9", "en": "PHQ-9" },
+      "summary": { "es": "Cribado de depresión.", "en": "Depression screening." },
+      "group": "clinicos", "category": "depresion", "subcategory": "cribado",
+      "tags": ["depresion","cribado"], "latestVersion": "v1", "locales": ["es"],
+      "durationMin": 3, "questionCount": 9, "access": "free", "license": "public-domain-or-perms"
+    },
+
+    { "slug": "bfi-44",
+      "title": { "es": "Big Five Inventory (BFI-44)", "en": "BFI-44" },
+      "summary": { "es": "Rasgos de personalidad Big Five.", "en": "Big Five traits." },
+      "group": "clinicos", "category": "personalidad", "subcategory": "bigfive",
+      "tags": ["bigfive","rasgos"], "latestVersion": "v1", "locales": ["es"],
+      "durationMin": 8, "questionCount": 44, "access": "free", "license": "public-domain-or-perms"
+    },
+    { "slug": "tipi-10",
+      "title": { "es": "Ten-Item Personality Inventory (TIPI)", "en": "TIPI" },
+      "summary": { "es": "Big Five ultrabreve (10 ítems).", "en": "Ultra-brief Big Five (10 items)." },
+      "group": "clinicos", "category": "personalidad", "subcategory": "bigfive",
+      "tags": ["bigfive","breve"], "latestVersion": "v1", "locales": ["es"],
+      "durationMin": 2, "questionCount": 10, "access": "free", "license": "public-domain-or-perms"
+    },
+    { "slug": "mini-ipip-20",
+      "title": { "es": "Mini-IPIP (20)", "en": "Mini-IPIP (20)" },
+      "summary": { "es": "Big Five corto (20 ítems).", "en": "Short Big Five (20 items)." },
+      "group": "clinicos", "category": "personalidad", "subcategory": "bigfive",
+      "tags": ["bigfive","corto"], "latestVersion": "v1", "locales": ["es"],
+      "durationMin": 4, "questionCount": 20, "access": "free", "license": "public-domain-or-perms"
+    },
+    { "slug": "epq-r-s",
+      "title": { "es": "Eysenck EPQ-R-S (corto)", "en": "Eysenck EPQ-R-S (short)" },
+      "summary": { "es": "Extraversión, Neuroticismo, Psicoticismo.", "en": "E, N, P traits." },
+      "group": "clinicos", "category": "personalidad", "subcategory": "eysenck",
+      "tags": ["eysenck"], "latestVersion": "v1", "locales": ["es"],
+      "durationMin": 6, "questionCount": 48, "access": "free", "license": "public-domain-or-perms"
+    },
+
+    { "slug": "stroop-color-word",
+      "title": { "es": "Test de Stroop", "en": "Stroop Test" },
+      "summary": { "es": "Inhibición / atención selectiva.", "en": "Inhibition / selective attention." },
+      "group": "clinicos", "category": "cognicion-atencion", "subcategory": "funcion-ejecutiva",
+      "tags": ["atencion","inhibicion"], "latestVersion": "v1", "locales": ["es"],
+      "durationMin": 5, "questionCount": 60, "access": "free", "license": "public-domain-or-perms"
+    },
+    { "slug": "trail-making-test",
+      "title": { "es": "Trail Making Test (TMT)", "en": "Trail Making Test (TMT)" },
+      "summary": { "es": "Flexibilidad cognitiva / velocidad.", "en": "Cognitive flexibility / speed." },
+      "group": "clinicos", "category": "cognicion-atencion", "subcategory": "funcion-ejecutiva",
+      "tags": ["funcion-ejecutiva"], "latestVersion": "v1", "locales": ["es"],
+      "durationMin": 5, "questionCount": 2, "access": "free", "license": "public-domain-or-perms"
+    },
+    { "slug": "digit-span",
+      "title": { "es": "Digit Span (simple)", "en": "Digit Span (simple)" },
+      "summary": { "es": "Memoria de trabajo: dígitos.", "en": "Working memory: digits." },
+      "group": "clinicos", "category": "cognicion-atencion", "subcategory": "memoria-trabajo",
+      "tags": ["memoria","atencion"], "latestVersion": "v1", "locales": ["es"],
+      "durationMin": 4, "questionCount": 16, "access": "free", "license": "public-domain-or-perms"
+    },
+
+    { "slug": "cd-risc-10",
+      "title": { "es": "CD-RISC-10 (Resiliencia)", "en": "CD-RISC-10 (Resilience)" },
+      "summary": { "es": "Resiliencia percibida (10 ítems).", "en": "Perceived resilience." },
+      "group": "clinicos", "category": "resiliencia-afrontamiento", "subcategory": "resiliencia",
+      "tags": ["resiliencia"], "latestVersion": "v1", "locales": ["es"],
+      "durationMin": 3, "questionCount": 10, "access": "free", "license": "public-domain-or-perms"
+    },
+    { "slug": "brief-cope",
+      "title": { "es": "Brief COPE", "en": "Brief COPE" },
+      "summary": { "es": "Estrategias de afrontamiento.", "en": "Coping strategies." },
+      "group": "clinicos", "category": "resiliencia-afrontamiento", "subcategory": "estilos-afrontamiento",
+      "tags": ["afrontamiento"], "latestVersion": "v1", "locales": ["es"],
+      "durationMin": 7, "questionCount": 28, "access": "free", "license": "public-domain-or-perms"
+    },
+
+    { "slug": "ghq-12",
+      "title": { "es": "GHQ-12", "en": "GHQ-12" },
+      "summary": { "es": "Salud mental general (cribado).", "en": "General mental health screening." },
+      "group": "clinicos", "category": "salud-mental-general", "subcategory": "ghq",
+      "tags": ["general","cribado"], "latestVersion": "v1", "locales": ["es"],
+      "durationMin": 3, "questionCount": 12, "access": "free", "license": "public-domain-or-perms"
+    }
+  ]
+}
