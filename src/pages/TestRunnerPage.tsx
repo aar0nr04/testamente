@@ -14,13 +14,17 @@ export function TestRunnerPage() {
 
   if (!test) return <p>{t('test.notFound')}</p>;
 
-  function onSubmit(event: FormEvent) {
-    event.preventDefault();
-    const result = calculateResult(test, answers);
+function onSubmit(event: FormEvent) {
+  event.preventDefault();
 
-    saveResult(result);
-    navigate(`/results/${result.id}`);
+  if (!test) {
+    return;
   }
+
+  const result = calculateResult(test, answers);
+  saveResult(result);
+  navigate(`/results/${result.id}`);
+}
 
   return (
     <form className="stack" onSubmit={onSubmit}>
