@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function self(uid) { return signedIn() && request.auth.uid == uid; }
+    function admin() { return signedIn() && request.auth.token.admin == true; }
+    function participant() { return signedIn() && request.auth.uid in resource.data.participantIds; }
+    function safeUserUpdate() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isApprovedPsychologist', 'entitlements', 'isAdmin', 'verifiedEmail']);
+    }
+    match /users/{uid} {
+      allow read: if self(uid) || admin();
+      allow create: if self(uid) && request.resource.data.role in ['patient', 'psychologist'];
+      allow update: if self(uid) && safeUserUpdate();
+      allow delete: if false;
+      match /testResults/{resultId} { allow read, write: if self(uid); }
+      match /test_results/{resultId} { allow read: if self(uid); allow write: if false; }
+      match /appointments/{appointmentId} { allow read: if self(uid); allow write: if false; }
+    }
+    match /publicPsychologistProfiles/{uid} { allow read: if true; allow write: if admin(); }
+    match /tests/{testId} { allow read: if true; allow write: if admin(); }
+    match /licensedTests/{testId}/versions/{versionId} { allow read, write: if false; }
+    match /entitlements/{uid} { allow read: if self(uid); allow write: if false; }
+    match /appointments/{appointmentId} {
+      allow read: if participant() || (signedIn() && request.auth.uid in request.resource.data.participantIds) || admin();
+      allow create: if signedIn() && request.auth.uid == request.resource.data.patientId && request.auth.uid in request.resource.data.participantIds;
+      allow update: if participant() && request.resource.data.participantIds == resource.data.participantIds && request.resource.data.patientId == resource.data.patientId && request.resource.data.psychologistId == resource.data.psychologistId;
+      allow delete: if false;
+      match /messages/{messageId} {
+        allow read: if signedIn() && request.auth.uid in get(/databases/$(database)/documents/appointments/$(appointmentId)).data.participantIds;
+        allow create: if signedIn() && request.auth.uid == request.resource.data.senderId && request.auth.uid in request.resource.data.participantIds;
+        allow update, delete: if false;
+      }
+    }
+    match /testProfessionalReviews/{reviewId} { allow read, write: if signedIn() && (request.auth.token.professional_reviewer == true || admin()); }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

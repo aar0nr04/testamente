@@ -1,32 +1,11 @@
-import type { TestRunResult } from '../types/test';
+import { doc, getDoc, getDocs, collection, query, orderBy, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from './firebase';
+import type { TestRunResult } from '../types/domain';
 
-const RESULTS_KEY = 'testamente:results';
-
-export function saveResult(result: TestRunResult) {
-  const existing = listResults();
-  const updated = [result, ...existing].slice(0, 50);
-
-  localStorage.setItem(RESULTS_KEY, JSON.stringify(updated));
-  sessionStorage.setItem(`testamente:result:${result.id}`, JSON.stringify(result));
-}
-
-export function listResults(): TestRunResult[] {
-  const raw = localStorage.getItem(RESULTS_KEY);
-
-  if (!raw) {
-    return [];
-  }
-
-  const parsed = JSON.parse(raw) as TestRunResult[];
-  return parsed.sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
-}
-
-export function findResultById(resultId: string): TestRunResult | undefined {
-  const fromSession = sessionStorage.getItem(`testamente:result:${resultId}`);
-
-  if (fromSession) {
-    return JSON.parse(fromSession) as TestRunResult;
-  }
-
-  return listResults().find((result) => result.id === resultId);
-}
+const CACHE_KEY = 'testamente:results-cache';
+function readCache(): TestRunResult[] { try { const value: unknown = JSON.parse(localStorage.getItem(CACHE_KEY) ?? '[]'); return Array.isArray(value) ? value as TestRunResult[] : []; } catch { return []; } }
+export function saveCachedResult(result: TestRunResult): void { localStorage.setItem(CACHE_KEY, JSON.stringify([result, ...readCache().filter((item) => item.id !== result.id)].slice(0, 50))); }
+export function listCachedResults(): TestRunResult[] { return readCache().sort((a, b) => b.completedAt.localeCompare(a.completedAt)); }
+export async function saveResult(result: TestRunResult, uid?: string): Promise<void> { saveCachedResult(result); if (!uid) return; await setDoc(doc(db, 'users', uid, 'testResults', result.id), { ...result, userId: uid, createdAt: serverTimestamp() }, { merge: true }); }
+export async function listResults(uid?: string): Promise<TestRunResult[]> { if (!uid) return listCachedResults(); const snapshot = await getDocs(query(collection(db, 'users', uid, 'testResults'), orderBy('completedAt', 'desc'))).catch(() => null); if (snapshot && !snapshot.empty) return snapshot.docs.map((item) => item.data() as TestRunResult); const legacy = await getDocs(collection(db, 'users', uid, 'test_results')).catch(() => null); return legacy?.docs.map((item) => item.data() as TestRunResult) ?? []; }
+export async function findResultById(resultId: string, uid?: string): Promise<TestRunResult | undefined> { const cached = listCachedResults().find((item) => item.id === resultId); if (cached) return cached; if (!uid) return undefined; const snapshot = await getDoc(doc(db, 'users', uid, 'testResults', resultId)); return snapshot.exists() ? snapshot.data() as TestRunResult : undefined; }

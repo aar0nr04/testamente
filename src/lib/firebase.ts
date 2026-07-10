@@ -1,17 +1,13 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getFunctions } from 'firebase/functions';
+import { getStorage } from 'firebase/storage';
+import { appEnv } from './env';
 
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? 'replace-me',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ?? 'replace-me',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID ?? 'replace-me',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ?? 'replace-me',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ?? 'replace-me',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID ?? 'replace-me',
-};
-
-const app = initializeApp(firebaseConfig);
-
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const firebaseApp = initializeApp(appEnv.firebase);
+export const auth = getAuth(firebaseApp);
+export const db = getFirestore(firebaseApp);
+export const storage = getStorage(firebaseApp);
+export const functions = getFunctions(firebaseApp, appEnv.functionsRegion);
+export const googleProvider = new GoogleAuthProvider();
