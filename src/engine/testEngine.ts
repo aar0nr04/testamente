@@ -16,7 +16,7 @@ export function calculateScores(test: PsychologicalTest, answers: Record<string,
   const scales: ScaleResult[] = (test.scales?.length ? test.scales.map((scale) => ({ scaleId: scale.id, score: totals.get(scale.id) ?? 0, range: rangeFor(totals.get(scale.id) ?? 0, test.results?.scales.find((item) => item.id === scale.id)?.ranges) })) : [{ scaleId: 'total', score: totalScore, range: rangeFor(totalScore, test.resultBands) }]);
   return { totalScore, scales, primaryRange: scales[0]?.range };
 }
-export function calculateResult(test: PsychologicalTest, answers: Record<string, string>, userId?: string): TestRunResult {
+export function calculateResult(test: PsychologicalTest, answers: Record<string, string>, userId?: string, resultId: string = crypto.randomUUID()): TestRunResult {
   const report = calculateScores(test, answers); const band = report.primaryRange ?? test.resultBands?.[test.resultBands.length - 1];
-  return { id: crypto.randomUUID(), testId: test.id, slug: test.slug, version: test.version, locale: test.locale, title: test.title, answers, totalScore: report.totalScore, bandId: band?.labelKey ?? band?.label, scales: report.scales, completedAt: new Date().toISOString(), userId, advice: band?.advice ?? band?.adviceKey };
+  return { id: resultId, testId: test.id, instrumentId: test.id, instrumentVersion: test.version ?? 'legacy-v1', algorithmVersion: test.algorithmVersion ?? 'legacy-v1', contentVersion: test.contentVersion ?? test.version ?? 'legacy-v1', slug: test.slug, version: test.version, locale: test.locale, title: test.title, answers, responses: answers, totalScore: report.totalScore, scaleTotals: Object.fromEntries(report.scales.map((scale) => [scale.scaleId, scale.score])), interpretation: band?.labelKey ?? band?.label, bandId: band?.labelKey ?? band?.label, scales: report.scales, completedAt: new Date().toISOString(), userId, advice: band?.advice ?? band?.adviceKey };
 }

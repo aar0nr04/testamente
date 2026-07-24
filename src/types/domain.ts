@@ -1,6 +1,6 @@
 import type { Timestamp } from 'firebase/firestore';
 
-export type UserRole = 'patient' | 'psychologist' | 'professional_reviewer' | 'admin';
+export type UserRole = 'patient' | 'psychologist' | 'professional_reviewer' | 'admin' | 'owner';
 export type LocaleCode = 'es' | 'en' | 'fr' | 'pt' | 'it' | 'de' | 'zh';
 export type LicenseStatus = 'public_domain' | 'review_only' | 'license_pending' | 'license_confirmed' | 'expired' | 'blocked';
 export type AccessMode = 'public' | 'authenticated' | 'reviewer_allowlist' | 'entitlement_required';
@@ -63,6 +63,7 @@ export interface ResultRange { min: number; max: number; label: string; color?: 
 export interface TestScale { id: string; title: string; method?: string }
 export interface PsychologicalTest {
   id: string; slug?: string; version?: string; locale?: LocaleCode;
+  algorithmVersion?: string; contentVersion?: string;
   titleKey?: string; descriptionKey?: string; title?: string; description?: string;
   estimatedMinutes: number; questionCount?: number; questions: TestQuestion[];
   scales?: TestScale[]; resultBands?: ResultRange[]; results?: { scales: { id: string; ranges: ResultRange[] }[] };
@@ -72,9 +73,9 @@ export interface PsychologicalTest {
 }
 export interface ScaleResult { scaleId: string; score: number; range?: ResultRange }
 export interface TestRunResult {
-  id: string; testId: string; slug?: string; version?: string; locale?: LocaleCode;
+  id: string; testId: string; instrumentId: string; instrumentVersion: string; algorithmVersion: string; contentVersion: string; slug?: string; version?: string; locale?: LocaleCode;
   title?: string; answers: Record<string, string>; totalScore: number; bandId?: string;
-  scales?: ScaleResult[]; completedAt: string; userId?: string; advice?: string;
+  responses: Record<string, string>; scaleTotals: Record<string, number>; interpretation?: string; scales?: ScaleResult[]; completedAt: string; userId?: string; advice?: string;
 }
 export type AppointmentStatus = 'pending' | 'accepted' | 'declined' | 'counter_proposed' | 'cancelled';
 export interface Appointment { id: string; patientId: string; psychologistId: string; participantIds: string[]; status: AppointmentStatus; startTime?: Timestamp; proposedStartTime?: Timestamp; timezone: string; notes?: string; createdAt?: Timestamp; updatedAt?: Timestamp }
