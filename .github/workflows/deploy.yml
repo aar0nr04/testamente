@@ -28,8 +28,17 @@ jobs:
           node-version: 20
           cache: npm
 
+      - name: Setup Java for Emulator Suite
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
       - name: Install dependencies
         run: npm ci
+
+      - name: Install Functions dependencies
+        run: npm --prefix functions ci
 
       - name: Lint
         run: npm run lint
@@ -39,6 +48,18 @@ jobs:
 
       - name: Unit tests
         run: npm test
+
+      - name: Validate instruments
+        run: npm run validate:instruments
+
+      - name: Validate translations
+        run: npm run validate:translations
+
+      - name: Test Firebase rules
+        run: npm run test:rules
+
+      - name: Build Functions
+        run: npm --prefix functions run build
 
       - name: Build
         env:
