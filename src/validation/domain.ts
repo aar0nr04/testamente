@@ -3,7 +3,7 @@ import type { PsychologicalTest, UserProfile } from '../types/domain';
 export function isRecord(value: unknown): value is Record<string, unknown> { return typeof value === 'object' && value !== null; }
 export function validateProfile(value: unknown): value is UserProfile {
   if (!isRecord(value) || typeof value.uid !== 'string' || typeof value.name !== 'string') return false;
-  return ['patient', 'psychologist', 'professional_reviewer', 'admin'].includes(String(value.role)) && typeof value.termsAccepted === 'boolean';
+  return ['patient', 'psychologist', 'professional_reviewer', 'admin', 'owner'].includes(String(value.role)) && typeof value.termsAccepted === 'boolean';
 }
 export function validateTest(test: PsychologicalTest): string[] {
   const errors: string[] = [];

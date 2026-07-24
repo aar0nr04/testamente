@@ -3,36 +3,89 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function self(uid) { return signedIn() && request.auth.uid == uid; }
-    function admin() { return signedIn() && request.auth.token.admin == true; }
-    function participant() { return signedIn() && request.auth.uid in resource.data.participantIds; }
-    function safeUserUpdate() {
-      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isApprovedPsychologist', 'entitlements', 'isAdmin', 'verifiedEmail']);
+    function hasClaim(name) { return request.auth.token.keys().hasAny([name]) && request.auth.token[name] == true; }
+    function adminOrOwner() { return signedIn() && (hasClaim('admin') || hasClaim('owner')); }
+    function reviewer() { return signedIn() && (hasClaim('professional_reviewer') || hasClaim('admin') || hasClaim('owner')); }
+    function serverNow(field) { return request.resource.data[field] == request.time; }
+    function protectedUserFields() { return ['role', 'isApprovedPsychologist', 'isAdmin', 'verifiedEmail', 'entitlements', 'premium']; }
+    function safeInitialProfessional() {
+      return !request.resource.data.keys().hasAny(['professional'])
+        || (request.resource.data.professional.isVerified == false && request.resource.data.professional.approvalStatus == 'pending');
     }
+    function preservesProfessionalApproval() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['professional'])
+        || (resource.data.keys().hasAll(['professional']) && request.resource.data.keys().hasAll(['professional'])
+          && request.resource.data.professional.isVerified == resource.data.professional.isVerified
+          && request.resource.data.professional.approvalStatus == resource.data.professional.approvalStatus);
+    }
+    function safeNewUser(uid) {
+      return self(uid)
+        && request.resource.data.uid == uid
+        && request.resource.data.role in ['patient', 'psychologist']
+        && !request.resource.data.keys().hasAny(['isApprovedPsychologist', 'isAdmin', 'verifiedEmail', 'entitlements', 'premium'])
+        && safeInitialProfessional()
+        && serverNow('createdAt') && serverNow('updatedAt');
+    }
+    function safeUserUpdate(uid) {
+      return self(uid)
+        && request.resource.data.uid == resource.data.uid
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedUserFields())
+        && preservesProfessionalApproval()
+        && serverNow('updatedAt');
+    }
+    function appointmentParticipant(data) { return signedIn() && request.auth.uid in data.participantIds; }
+
     match /users/{uid} {
-      allow read: if self(uid) || admin();
-      allow create: if self(uid) && request.resource.data.role in ['patient', 'psychologist'];
-      allow update: if self(uid) && safeUserUpdate();
+      allow read: if self(uid) || adminOrOwner();
+      allow create: if safeNewUser(uid);
+      allow update: if safeUserUpdate(uid);
       allow delete: if false;
-      match /testResults/{resultId} { allow read, write: if self(uid); }
-      match /test_results/{resultId} { allow read: if self(uid); allow write: if false; }
-      match /appointments/{appointmentId} { allow read: if self(uid); allow write: if false; }
+      match /testResults/{resultId} {
+        allow read: if self(uid) || adminOrOwner();
+        allow create: if self(uid) && request.resource.data.userId == uid && serverNow('createdAt');
+        allow update, delete: if false;
+      }
+      match /test_results/{resultId} { allow read: if self(uid) || adminOrOwner(); allow write: if false; }
+      match /appointments/{appointmentId} { allow read: if self(uid) || adminOrOwner(); allow write: if false; }
     }
-    match /publicPsychologistProfiles/{uid} { allow read: if true; allow write: if admin(); }
-    match /tests/{testId} { allow read: if true; allow write: if admin(); }
+
+    match /publicPsychologistProfiles/{uid} { allow read: if true; allow write: if adminOrOwner(); }
+    match /tests/{testId} { allow read: if true; allow write: if adminOrOwner(); }
+    match /instrumentLicenses/{instrumentId} { allow read: if reviewer(); allow write: if adminOrOwner(); }
     match /licensedTests/{testId}/versions/{versionId} { allow read, write: if false; }
-    match /entitlements/{uid} { allow read: if self(uid); allow write: if false; }
+    match /privateInstrumentConfigs/{instrumentId} { allow read, write: if false; }
+    match /privateInstrumentAccess/{accessId} { allow read, write: if false; }
+    match /privatePayloadAudit/{auditId} { allow read, write: if false; }
+    match /entitlements/{uid} { allow read: if self(uid) || adminOrOwner(); allow write: if false; }
+
     match /appointments/{appointmentId} {
-      allow read: if participant() || (signedIn() && request.auth.uid in request.resource.data.participantIds) || admin();
-      allow create: if signedIn() && request.auth.uid == request.resource.data.patientId && request.auth.uid in request.resource.data.participantIds;
-      allow update: if participant() && request.resource.data.participantIds == resource.data.participantIds && request.resource.data.patientId == resource.data.patientId && request.resource.data.psychologistId == resource.data.psychologistId;
+      allow read: if appointmentParticipant(resource.data) || adminOrOwner();
+      allow create: if self(request.resource.data.patientId)
+        && request.resource.data.patientId in request.resource.data.participantIds
+        && request.resource.data.psychologistId in request.resource.data.participantIds
+        && serverNow('createdAt') && serverNow('updatedAt');
+      allow update: if appointmentParticipant(resource.data)
+        && request.resource.data.participantIds == resource.data.participantIds
+        && request.resource.data.patientId == resource.data.patientId
+        && request.resource.data.psychologistId == resource.data.psychologistId
+        && serverNow('updatedAt');
       allow delete: if false;
       match /messages/{messageId} {
-        allow read: if signedIn() && request.auth.uid in get(/databases/$(database)/documents/appointments/$(appointmentId)).data.participantIds;
-        allow create: if signedIn() && request.auth.uid == request.resource.data.senderId && request.auth.uid in request.resource.data.participantIds;
+        allow read: if appointmentParticipant(get(/databases/$(database)/documents/appointments/$(appointmentId)).data) || adminOrOwner();
+        allow create: if appointmentParticipant(get(/databases/$(database)/documents/appointments/$(appointmentId)).data)
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.participantIds == get(/databases/$(database)/documents/appointments/$(appointmentId)).data.participantIds
+          && serverNow('createdAt');
         allow update, delete: if false;
       }
     }
-    match /testProfessionalReviews/{reviewId} { allow read, write: if signedIn() && (request.auth.token.professional_reviewer == true || admin()); }
+
+    match /testProfessionalReviews/{reviewId} {
+      allow read: if reviewer();
+      allow create: if reviewer() && request.resource.data.reviewerId == request.auth.uid && serverNow('createdAt') && serverNow('updatedAt');
+      allow update: if reviewer() && resource.data.reviewerId == request.auth.uid && request.resource.data.reviewerId == resource.data.reviewerId && request.resource.data.instrumentId == resource.data.instrumentId && serverNow('updatedAt');
+      allow delete: if false;
+    }
     match /{document=**} { allow read, write: if false; }
   }
 }
