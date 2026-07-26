@@ -43,6 +43,14 @@ describe('Firestore security rules', () => {
     await assertFails(setDoc(doc(testEnv.authenticatedContext(psychologist).firestore(), `users/${psychologist}`), { ...profile(psychologist, 'psychologist'), premium: true }));
     await seed(`users/${psychologist}`, { ...profile(psychologist, 'psychologist'), professional: { isVerified: false, approvalStatus: 'pending' } });
     await assertFails(updateDoc(doc(testEnv.authenticatedContext(psychologist).firestore(), `users/${psychologist}`), { professional: { isVerified: true, approvalStatus: 'approved' }, updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(patientDatabase, `users/${patientA}`), { claims: { admin: true }, updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(testEnv.authenticatedContext(psychologist).firestore(), `users/${psychologist}`), { licenseStatus: 'licensed', updatedAt: serverTimestamp() }));
+  });
+
+  it('allows editable professional details but never direct approval or publication', async () => {
+    await seed(`users/${psychologist}`, { ...profile(psychologist, 'psychologist'), professional: { isVerified: false, approvalStatus: 'pending', specialties: [] } });
+    await assertSucceeds(updateDoc(doc(testEnv.authenticatedContext(psychologist).firestore(), `users/${psychologist}`), { professional: { isVerified: false, approvalStatus: 'pending', specialties: ['ansiedad'], languages: ['es'], modalities: ['online'], isPublicPhone: false, isPublicLocation: false, availability: {}, acceptingNewPatients: true }, updatedAt: serverTimestamp() }));
+    await assertFails(setDoc(doc(testEnv.authenticatedContext(admin, { admin: true }).firestore(), `publicPsychologistProfiles/${psychologist}`), { uid: psychologist, name: 'private bypass' }));
   });
 
   it('limits appointment and message reads to participants', async () => {
@@ -52,12 +60,12 @@ describe('Firestore security rules', () => {
     await assertFails(getDoc(doc(testEnv.authenticatedContext(patientB).firestore(), 'appointments/a1/messages/m1')));
   });
 
-  it('allows only claimed reviewers to create professional reviews and only admins to change licenses', async () => {
+  it('allows only claimed reviewers to create professional reviews and keeps license writes off the browser', async () => {
     const review = { instrumentId: 'gad-7', contentVersion: '1', algorithmVersion: '1', locale: 'es', reviewerId: reviewer, status: 'in_review', questionComments: {}, scoringComments: '', interpretationComments: '', translationComments: '', generalComments: '', createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
     await assertFails(setDoc(doc(testEnv.authenticatedContext(patientA).firestore(), 'testProfessionalReviews/r1'), review));
     await assertSucceeds(setDoc(doc(testEnv.authenticatedContext(reviewer, { professional_reviewer: true }).firestore(), 'testProfessionalReviews/r1'), review));
     await assertFails(setDoc(doc(testEnv.authenticatedContext(reviewer, { professional_reviewer: true }).firestore(), 'instrumentLicenses/gad-7'), { status: 'licensed' }));
-    await assertSucceeds(setDoc(doc(testEnv.authenticatedContext(admin, { admin: true }).firestore(), 'instrumentLicenses/gad-7'), { status: 'licensed' }));
+    await assertFails(setDoc(doc(testEnv.authenticatedContext(admin, { admin: true }).firestore(), 'instrumentLicenses/gad-7'), { status: 'licensed' }));
   });
 
   it('never exposes private instrument payloads through Storage rules', async () => {
