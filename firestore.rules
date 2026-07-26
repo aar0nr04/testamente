@@ -3,33 +3,43 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function self(uid) { return signedIn() && request.auth.uid == uid; }
-    function hasClaim(name) { return request.auth.token.keys().hasAny([name]) && request.auth.token[name] == true; }
-    function adminOrOwner() { return signedIn() && (hasClaim('admin') || hasClaim('owner')); }
-    function reviewer() { return signedIn() && (hasClaim('professional_reviewer') || hasClaim('admin') || hasClaim('owner')); }
+    function hasClaim(name) { return signedIn() && request.auth.token.keys().hasAny([name]) && request.auth.token[name] == true; }
+    function adminOrOwner() { return hasClaim('admin') || hasClaim('owner'); }
+    function reviewer() { return hasClaim('professional_reviewer') || adminOrOwner(); }
     function serverNow(field) { return request.resource.data[field] == request.time; }
-    function protectedUserFields() { return ['role', 'isApprovedPsychologist', 'isAdmin', 'verifiedEmail', 'entitlements', 'premium']; }
-    function safeInitialProfessional() {
-      return !request.resource.data.keys().hasAny(['professional'])
-        || (request.resource.data.professional.isVerified == false && request.resource.data.professional.approvalStatus == 'pending');
+    function publicUserKeys() { return ['uid', 'email', 'role', 'name', 'photoUrl', 'phone', 'lang', 'dob', 'gender', 'country', 'state', 'city', 'timeZone', 'termsAccepted', 'termsAcceptedAt', 'termsVersion', 'consents', 'patientPrefs', 'professional', 'createdAt', 'updatedAt']; }
+    function editableUserKeys() { return ['name', 'photoUrl', 'phone', 'lang', 'dob', 'gender', 'country', 'state', 'city', 'timeZone', 'consents', 'patientPrefs', 'professional', 'updatedAt']; }
+    function editableProfessionalKeys() { return ['headline', 'description', 'specialties', 'languages', 'modalities', 'priceMXN', 'sessionMinutes', 'isPublicPhone', 'isPublicLocation', 'availability', 'acceptingNewPatients', 'licenseNumber']; }
+    function validInitialProfessional() {
+      return request.resource.data.professional.keys().hasAll(['isVerified', 'approvalStatus'])
+        && request.resource.data.professional.keys().hasOnly(editableProfessionalKeys().concat(['isVerified', 'approvalStatus']))
+        && request.resource.data.professional.isVerified == false
+        && request.resource.data.professional.approvalStatus == 'pending';
+    }
+    function compatibleInitialProfessional() {
+      return (request.resource.data.role == 'patient' && !request.resource.data.keys().hasAny(['professional']))
+        || (request.resource.data.role == 'psychologist' && request.resource.data.keys().hasAll(['professional']) && validInitialProfessional());
     }
     function preservesProfessionalApproval() {
       return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['professional'])
         || (resource.data.keys().hasAll(['professional']) && request.resource.data.keys().hasAll(['professional'])
           && request.resource.data.professional.isVerified == resource.data.professional.isVerified
-          && request.resource.data.professional.approvalStatus == resource.data.professional.approvalStatus);
+          && request.resource.data.professional.approvalStatus == resource.data.professional.approvalStatus
+          && request.resource.data.professional.diff(resource.data.professional).affectedKeys().hasOnly(editableProfessionalKeys()));
     }
     function safeNewUser(uid) {
       return self(uid)
+        && request.resource.data.keys().hasOnly(publicUserKeys())
         && request.resource.data.uid == uid
         && request.resource.data.role in ['patient', 'psychologist']
-        && !request.resource.data.keys().hasAny(['isApprovedPsychologist', 'isAdmin', 'verifiedEmail', 'entitlements', 'premium'])
-        && safeInitialProfessional()
+        && compatibleInitialProfessional()
         && serverNow('createdAt') && serverNow('updatedAt');
     }
     function safeUserUpdate(uid) {
       return self(uid)
         && request.resource.data.uid == resource.data.uid
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedUserFields())
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(editableUserKeys())
         && preservesProfessionalApproval()
         && serverNow('updatedAt');
     }
@@ -49,13 +59,15 @@ service cloud.firestore {
       match /appointments/{appointmentId} { allow read: if self(uid) || adminOrOwner(); allow write: if false; }
     }
 
-    match /publicPsychologistProfiles/{uid} { allow read: if true; allow write: if adminOrOwner(); }
+    // Only a Cloud Function running with Admin SDK publishes sanitized public profiles.
+    match /publicPsychologistProfiles/{uid} { allow read: if true; allow write: if false; }
     match /tests/{testId} { allow read: if true; allow write: if adminOrOwner(); }
-    match /instrumentLicenses/{instrumentId} { allow read: if reviewer(); allow write: if adminOrOwner(); }
+    match /instrumentLicenses/{instrumentId} { allow read: if reviewer(); allow write: if false; }
     match /licensedTests/{testId}/versions/{versionId} { allow read, write: if false; }
     match /privateInstrumentConfigs/{instrumentId} { allow read, write: if false; }
     match /privateInstrumentAccess/{accessId} { allow read, write: if false; }
     match /privatePayloadAudit/{auditId} { allow read, write: if false; }
+    match /adminAudit/{auditId} { allow read, write: if false; }
     match /entitlements/{uid} { allow read: if self(uid) || adminOrOwner(); allow write: if false; }
 
     match /appointments/{appointmentId} {

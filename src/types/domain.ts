@@ -1,12 +1,15 @@
 import type { Timestamp } from 'firebase/firestore';
 
-export type UserRole = 'patient' | 'psychologist' | 'professional_reviewer' | 'admin' | 'owner';
+/** A profile describes the kind of account, never its administrative privileges. */
+export type UserRole = 'patient' | 'psychologist';
+export type PrivilegedClaim = 'owner' | 'admin' | 'professional_reviewer';
 export type LocaleCode = 'es' | 'en' | 'fr' | 'pt' | 'it' | 'de' | 'zh';
 export type LicenseStatus = 'public_domain' | 'review_only' | 'license_pending' | 'license_confirmed' | 'expired' | 'blocked';
 export type AccessMode = 'public' | 'authenticated' | 'reviewer_allowlist' | 'entitlement_required';
 
 export interface ProfessionalProfile {
   headline?: string;
+  description?: string;
   specialties: string[];
   languages: LocaleCode[];
   modalities: string[];
@@ -18,7 +21,9 @@ export interface ProfessionalProfile {
   isVerified: boolean;
   acceptingNewPatients: boolean;
   licenseNumber?: string;
-  approvalStatus?: 'pending' | 'approved' | 'rejected';
+  approvalStatus?: 'pending' | 'approved' | 'rejected' | 'changes_requested';
+  approvalNote?: string;
+  approvalUpdatedAt?: Timestamp;
 }
 
 export interface UserProfile {

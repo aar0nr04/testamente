@@ -4,7 +4,7 @@ La validación técnica no es validación clínica. Ningún instrumento del regi
 
 ## Ruta y permisos
 
-`/professional-review` está detrás del guard de cliente para los perfiles `owner`, `admin` y `professional_reviewer`. Las reglas de Firestore y la Function callable aplican la protección real mediante Custom Claims; `professional_reviewer` no puede ser creado ni asignado desde un cliente.
+`/professional-review` requiere Custom Claim `owner`, `admin` o `professional_reviewer`, correo verificado y App Check cuando aplica. `users/{uid}.role` sólo es `patient` o `psychologist`; ningún perfil concede permisos. Las reglas de Firestore y la Function callable aplican la protección real mediante Custom Claims; `professional_reviewer` no puede ser creado ni asignado desde un cliente.
 
 La página muestra la matriz por instrumento/idioma, permite recorrer el contenido disponible, calcular sus escalas, inspeccionar alertas y escribir una revisión en `testProfessionalReviews/{reviewId}` con:
 
