@@ -14,6 +14,8 @@ export interface ProfessionalProfile {
   languages: LocaleCode[];
   modalities: string[];
   priceMXN?: number;
+  currency?: string;
+  isPublicPrice?: boolean;
   sessionMinutes?: number;
   isPublicPhone: boolean;
   isPublicLocation: boolean;
@@ -21,9 +23,17 @@ export interface ProfessionalProfile {
   isVerified: boolean;
   acceptingNewPatients: boolean;
   licenseNumber?: string;
-  approvalStatus?: 'pending' | 'approved' | 'rejected' | 'changes_requested';
+  professionalLinks?: { label: string; url: string }[];
+  education?: string[];
+  experience?: string[];
+  publications?: string[];
+  researchAreas?: string[];
+  approvalStatus?: 'draft' | 'pending_review' | 'changes_requested' | 'approved' | 'rejected' | 'suspended' | 'pending';
   approvalNote?: string;
   approvalUpdatedAt?: Timestamp;
+  approvedBy?: string;
+  approvedAt?: Timestamp;
+  verifiedLicenseNumber?: string;
 }
 
 export interface UserProfile {

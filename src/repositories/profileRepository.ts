@@ -11,7 +11,8 @@ const defaults = (uid: string, role: UserRole, name: string, email?: string): Us
 
 export type EditableProfessionalProfile = Pick<ProfessionalProfile,
   'headline' | 'description' | 'specialties' | 'languages' | 'modalities' | 'priceMXN' | 'sessionMinutes'
-  | 'isPublicPhone' | 'isPublicLocation' | 'availability' | 'acceptingNewPatients' | 'licenseNumber'>;
+  | 'currency' | 'isPublicPrice' | 'isPublicPhone' | 'isPublicLocation' | 'availability' | 'acceptingNewPatients' | 'licenseNumber'
+  | 'professionalLinks' | 'education' | 'experience' | 'publications' | 'researchAreas'>;
 
 export type EditableProfile = Pick<UserProfile, 'name' | 'photoUrl' | 'phone' | 'lang' | 'country' | 'state' | 'city' | 'timeZone' | 'consents' | 'patientPrefs'> & {
   professional?: EditableProfessionalProfile;
@@ -26,12 +27,19 @@ export function editableProfessional(input: Partial<ProfessionalProfile> | undef
     languages: Array.isArray(input.languages) ? input.languages.filter((value): value is LocaleCode => ['es', 'en', 'fr', 'pt', 'it', 'de', 'zh'].includes(value)).slice(0, 7) : ['es'],
     modalities: Array.isArray(input.modalities) ? input.modalities.map((value) => value.trim()).filter(Boolean).slice(0, 6) : [],
     priceMXN: typeof input.priceMXN === 'number' && input.priceMXN >= 0 ? input.priceMXN : undefined,
+    currency: /^[A-Z]{3}$/.test(input.currency ?? '') ? input.currency : 'MXN',
+    isPublicPrice: input.isPublicPrice === true,
     sessionMinutes: typeof input.sessionMinutes === 'number' && input.sessionMinutes > 0 && input.sessionMinutes <= 240 ? input.sessionMinutes : undefined,
     isPublicPhone: input.isPublicPhone === true,
     isPublicLocation: input.isPublicLocation === true,
     availability: Object.fromEntries(Object.entries(input.availability ?? {}).map(([day, slots]) => [day, Array.isArray(slots) ? slots.map(String).slice(0, 12) : []])),
     acceptingNewPatients: input.acceptingNewPatients === true,
     licenseNumber: input.licenseNumber?.trim() || undefined,
+    professionalLinks: Array.isArray(input.professionalLinks) ? input.professionalLinks.filter((link) => typeof link?.label === 'string' && /^https:\/\//.test(link.url)).map((link) => ({ label: link.label.trim().slice(0, 80), url: link.url.trim().slice(0, 500) })).slice(0, 8) : [],
+    education: Array.isArray(input.education) ? input.education.map((value) => value.trim()).filter(Boolean).slice(0, 20) : [],
+    experience: Array.isArray(input.experience) ? input.experience.map((value) => value.trim()).filter(Boolean).slice(0, 20) : [],
+    publications: Array.isArray(input.publications) ? input.publications.map((value) => value.trim()).filter(Boolean).slice(0, 20) : [],
+    researchAreas: Array.isArray(input.researchAreas) ? input.researchAreas.map((value) => value.trim()).filter(Boolean).slice(0, 20) : [],
   };
 }
 

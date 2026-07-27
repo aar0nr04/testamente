@@ -26,6 +26,28 @@ export function RequireAuth({ verified = false }: { verified?: boolean }) {
   return <Outlet />;
 }
 
+export function RequireVerifiedEmail() {
+  return <RequireAuth verified />;
+}
+
+/** A professional workspace requires an actual psychologist profile, not a staff claim. */
+export function RequirePsychologistProfile() {
+  const { user, profile, loading } = useAuth();
+  const location = useLocation();
+  if (loading) return <p className="status">Cargando sesión…</p>;
+  if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  if (!user.emailVerified) return <Navigate to="/verify-email" replace />;
+  if (profile?.role !== 'psychologist') return <Navigate to="/profile" replace state={{ professionalProfileRequired: true }} />;
+  return <Outlet />;
+}
+
+export type ProjectPermission = 'read' | 'edit' | 'manage_collaborators' | 'review_technical' | 'review_clinical' | 'translate' | 'submit';
+/** Route-level collaborator data must be loaded by the page; this guard preserves an authenticated, verified boundary. */
+export function RequireProjectPermission({ permission }: { permission: ProjectPermission }) {
+  void permission;
+  return <RequireAuth verified />;
+}
+
 export function RequirePermission({ anyOf, verified = true, requiresAppCheck = false }: { anyOf: PrivilegedClaim[]; verified?: boolean; requiresAppCheck?: boolean }) {
   const { user, loading, isOwner, isAdmin, isProfessionalReviewer } = useAuth();
   const location = useLocation();

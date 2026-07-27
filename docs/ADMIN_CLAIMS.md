@@ -28,6 +28,7 @@ node scripts/set-user-claims.mjs grant UID_DEL_USUARIO owner --confirm
 node scripts/set-user-claims.mjs grant UID_DEL_USUARIO admin --confirm
 node scripts/set-user-claims.mjs grant UID_DEL_USUARIO professional_reviewer --confirm
 node scripts/set-user-claims.mjs remove UID_DEL_USUARIO professional_reviewer --confirm
+node scripts/set-user-claims.mjs grant UID_DEL_USUARIO admin --confirm --dry-run
 ```
 
 Tras el cambio, la persona debe cerrar/abrir sesión o renovar su token. El cliente usa `getIdTokenResult()` y nunca considera `profile.role` como autorización administrativa.
