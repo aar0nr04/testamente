@@ -7,5 +7,7 @@ service firebase.storage {
     }
     // Private test payloads are served only by the Admin SDK callable; never directly to a browser.
     match /licensed-test-payloads/{allPaths=**} { allow read, write: if false; }
+    // Project attachments require a dedicated server-side scanning flow before they are exposed.
+    match /instrument-projects/{allPaths=**} { allow read, write: if false; }
   }
 }

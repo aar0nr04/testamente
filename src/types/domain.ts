@@ -1,16 +1,21 @@
 import type { Timestamp } from 'firebase/firestore';
 
-export type UserRole = 'patient' | 'psychologist' | 'professional_reviewer' | 'admin' | 'owner';
+/** A profile describes the kind of account, never its administrative privileges. */
+export type UserRole = 'patient' | 'psychologist';
+export type PrivilegedClaim = 'owner' | 'admin' | 'professional_reviewer';
 export type LocaleCode = 'es' | 'en' | 'fr' | 'pt' | 'it' | 'de' | 'zh';
 export type LicenseStatus = 'public_domain' | 'review_only' | 'license_pending' | 'license_confirmed' | 'expired' | 'blocked';
 export type AccessMode = 'public' | 'authenticated' | 'reviewer_allowlist' | 'entitlement_required';
 
 export interface ProfessionalProfile {
   headline?: string;
+  description?: string;
   specialties: string[];
   languages: LocaleCode[];
   modalities: string[];
   priceMXN?: number;
+  currency?: string;
+  isPublicPrice?: boolean;
   sessionMinutes?: number;
   isPublicPhone: boolean;
   isPublicLocation: boolean;
@@ -18,7 +23,17 @@ export interface ProfessionalProfile {
   isVerified: boolean;
   acceptingNewPatients: boolean;
   licenseNumber?: string;
-  approvalStatus?: 'pending' | 'approved' | 'rejected';
+  professionalLinks?: { label: string; url: string }[];
+  education?: string[];
+  experience?: string[];
+  publications?: string[];
+  researchAreas?: string[];
+  approvalStatus?: 'draft' | 'pending_review' | 'changes_requested' | 'approved' | 'rejected' | 'suspended' | 'pending';
+  approvalNote?: string;
+  approvalUpdatedAt?: Timestamp;
+  approvedBy?: string;
+  approvedAt?: Timestamp;
+  verifiedLicenseNumber?: string;
 }
 
 export interface UserProfile {

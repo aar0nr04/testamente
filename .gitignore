@@ -11,6 +11,9 @@ node_modules
 functions/lib
 dist
 dist-ssr
+test-results
+playwright-report
+blob-report
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts
