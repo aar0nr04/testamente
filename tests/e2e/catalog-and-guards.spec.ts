@@ -15,6 +15,12 @@ test('redirects protected administration to login without a verified claimed ses
   await expect(page.getByRole('heading', { name: 'Iniciar sesión' })).toBeVisible();
 });
 
+test('redirects professional review to login without a verified claimed session', async ({ page }) => {
+  await page.goto('/professional-review?instrument=gad-7&locale=es');
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByRole('heading', { name: /Iniciar sesi.n/ })).toBeVisible();
+});
+
 test('runs the public questionnaire from instructions through answers to a score', async ({ page }) => {
   await page.goto('/tests/stress-check-v1');
   await expect(page.getByRole('heading', { name: 'Antes de comenzar' })).toBeVisible();
@@ -28,4 +34,13 @@ test('runs the public questionnaire from instructions through answers to a score
 
   await expect(page).toHaveURL(/\/results\//);
   await expect(page.locator('.score')).toHaveText('0');
+});
+
+test('offers a visible protected review entry only for a complete reviewed instrument', async ({ page }) => {
+  await page.goto('/tests');
+
+  const reviewEntry = page.locator('a[href*="professional-review"]').first();
+  await expect(reviewEntry).toBeVisible();
+  await expect(reviewEntry).toHaveText(/Abrir revisi.n/);
+  await expect(reviewEntry).toHaveAttribute('href', /instrument=(gad-7|phq-9|rses)/);
 });

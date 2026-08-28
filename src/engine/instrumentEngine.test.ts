@@ -27,6 +27,7 @@ describe('scoreInstrument', () => {
       ], total: { kind: 'sum', scaleIds: ['total', 'subscale'], ranges: [{ id: 'all', min: 0, max: 99, label: 'All', color: 'gray', advice: '' }] },
     };
     expect(scoreInstrument(algorithm, { reverse: '1', multiple: ['a', 'b'], matrix: 'yes' }).scaleTotals).toEqual({ total: 7, subscale: 2 });
+    expect(scoreInstrument(algorithm, { reverse: '1', multiple: ['a', 'b'], matrix: 'yes' }).calculation).toEqual(expect.arrayContaining([expect.objectContaining({ itemId: 'reverse', rawValue: 1, scoredValue: 4, reverseApplied: true, contributions: { total: 4 } })]));
     expect(scoreInstrument(algorithm, { reverse: 'unexpected', multiple: 'a', matrix: 'yes' }).validationErrors).toEqual(expect.arrayContaining(['reverse:invalid_option', 'multiple:multiple_expected']));
   });
 });

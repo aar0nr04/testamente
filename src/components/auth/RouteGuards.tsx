@@ -1,6 +1,5 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { appEnv } from '../../lib/env';
 import type { PrivilegedClaim } from '../../types/domain';
 
 export interface RouteAccessState {
@@ -49,19 +48,21 @@ export function RequireProjectPermission({ permission }: { permission: ProjectPe
 }
 
 export function RequirePermission({ anyOf, verified = true, requiresAppCheck = false }: { anyOf: PrivilegedClaim[]; verified?: boolean; requiresAppCheck?: boolean }) {
-  const { user, loading, isOwner, isAdmin, isProfessionalReviewer } = useAuth();
+  const { user, loading, appCheckReady, isOwner, isAdmin, isProfessionalReviewer } = useAuth();
   const location = useLocation();
   if (loading) return <p className="status">Cargando sesión…</p>;
   const state: RouteAccessState = {
     signedIn: Boolean(user),
     emailVerified: Boolean(user?.emailVerified),
-    appCheckReady: appEnv.useFirebaseEmulators || Boolean(appEnv.appCheckSiteKey),
+    appCheckReady,
     claims: { owner: isOwner, admin: isAdmin, professional_reviewer: isProfessionalReviewer },
   };
   if (!state.signedIn) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   if (verified && !state.emailVerified) return <Navigate to="/verify-email" replace />;
   if (requiresAppCheck && !state.appCheckReady) return <section className="panel narrow"><h1>App Check requerido</h1><p>Esta área protegida necesita App Check configurado antes de continuar.</p></section>;
-  if (!canAccessRoute(state, anyOf, verified, requiresAppCheck)) return <Navigate to="/" replace />;
+  if (!canAccessRoute(state, anyOf, verified, requiresAppCheck)) {
+    return <section className="panel narrow stack"><span className="eyebrow">Acceso protegido</span><h1>Necesitas autorización de revisión</h1><p>Tu cuenta ha iniciado sesión, pero no tiene una Custom Claim autorizada para esta área. Un owner debe conceder <code>professional_reviewer</code>, <code>admin</code> u <code>owner</code> mediante Admin SDK o una Function administrativa; el navegador no puede asignarla.</p><p>Después de concederla, cierra y abre sesión para renovar el token.</p></section>;
+  }
   return <Outlet />;
 }
 

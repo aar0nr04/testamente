@@ -11,6 +11,7 @@ node_modules
 functions/lib
 dist
 dist-ssr
+.firebase
 test-results
 playwright-report
 blob-report

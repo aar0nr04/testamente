@@ -1,4 +1,4 @@
-import type { AnswerValue, InstrumentAlgorithm, InstrumentAlgorithmItem, InstrumentScore, ScoreRange } from '../data/instruments/types';
+import type { AnswerValue, InstrumentAlgorithm, InstrumentAlgorithmItem, InstrumentCalculationItem, InstrumentScore, ScoreRange } from '../data/instruments/types';
 
 function rangeFor(value: number, ranges: ScoreRange[]): ScoreRange | undefined {
   return ranges.find((range) => value >= range.min && value <= range.max);
@@ -25,22 +25,44 @@ export function scoreInstrument(algorithm: InstrumentAlgorithm, responses: Recor
   const scaleTotals: Record<string, number> = Object.fromEntries(algorithm.scales.map((scale) => [scale.id, 0]));
   const validationErrors: string[] = [];
   const alerts: { code: string; message: string }[] = [];
+  const calculation: InstrumentCalculationItem[] = [];
 
   for (const item of algorithm.items) {
     const answer = responses[item.id];
     const error = validate(item, answer);
-    if (error) { validationErrors.push(error); continue; }
-    if (answer === undefined) continue;
+    if (error) {
+      validationErrors.push(error);
+      calculation.push({ itemId: item.id, response: answer, reverseApplied: Boolean(item.reverse), contributions: {} });
+      continue;
+    }
+    if (answer === undefined) {
+      calculation.push({ itemId: item.id, response: answer, reverseApplied: Boolean(item.reverse), contributions: {} });
+      continue;
+    }
     const rawValue = optionValue(item, answer);
-    if (rawValue === undefined) { validationErrors.push(`${item.id}:unscorable`); continue; }
+    if (rawValue === undefined) {
+      validationErrors.push(`${item.id}:unscorable`);
+      calculation.push({ itemId: item.id, response: answer, reverseApplied: Boolean(item.reverse), contributions: {} });
+      continue;
+    }
     const value = item.reverse ? (item.min ?? 0) + (item.max ?? 0) - rawValue : rawValue;
-    for (const [scaleId, weight] of Object.entries(item.scaleWeights ?? { total: 1 })) scaleTotals[scaleId] = (scaleTotals[scaleId] ?? 0) + value * weight;
-    if (typeof answer === 'string') for (const [scaleId, matrix] of Object.entries(item.scoreMatrix ?? {})) scaleTotals[scaleId] = (scaleTotals[scaleId] ?? 0) + (matrix[answer] ?? 0);
+    const contributions: Record<string, number> = {};
+    for (const [scaleId, weight] of Object.entries(item.scaleWeights ?? { total: 1 })) {
+      const contribution = value * weight;
+      scaleTotals[scaleId] = (scaleTotals[scaleId] ?? 0) + contribution;
+      contributions[scaleId] = (contributions[scaleId] ?? 0) + contribution;
+    }
+    if (typeof answer === 'string') for (const [scaleId, matrix] of Object.entries(item.scoreMatrix ?? {})) {
+      const contribution = matrix[answer] ?? 0;
+      scaleTotals[scaleId] = (scaleTotals[scaleId] ?? 0) + contribution;
+      contributions[scaleId] = (contributions[scaleId] ?? 0) + contribution;
+    }
+    calculation.push({ itemId: item.id, response: answer, rawValue, scoredValue: value, reverseApplied: Boolean(item.reverse), contributions });
     for (const alert of algorithm.alerts?.filter((candidate) => candidate.itemId === item.id && value >= candidate.minimumValue) ?? []) alerts.push({ code: alert.code, message: alert.message });
   }
 
   const selectedScales = algorithm.total.scaleIds ?? Object.keys(scaleTotals);
   const sum = selectedScales.reduce((total, scaleId) => total + (scaleTotals[scaleId] ?? 0), 0);
   const total = algorithm.total.kind === 'mean' && selectedScales.length ? sum / selectedScales.length : sum;
-  return { instrumentId: algorithm.instrumentId, algorithmVersion: algorithm.algorithmVersion, responses, scaleTotals, total, interpretation: rangeFor(total, algorithm.total.ranges), alerts, validationErrors };
+  return { instrumentId: algorithm.instrumentId, algorithmVersion: algorithm.algorithmVersion, responses, scaleTotals, total, interpretation: rangeFor(total, algorithm.total.ranges), alerts, validationErrors, calculation };
 }
