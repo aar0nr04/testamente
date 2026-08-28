@@ -57,7 +57,7 @@ if (-not (Test-Path '.env.staging.local')) {
 }
 
 $stagingEnvironment = Read-LocalEnvironment -Path '.env.staging.local'
-$requiredVariables = @('VITE_FIREBASE_API_KEY', 'VITE_FIREBASE_AUTH_DOMAIN', 'VITE_FIREBASE_PROJECT_ID', 'VITE_FIREBASE_STORAGE_BUCKET', 'VITE_FIREBASE_MESSAGING_SENDER_ID', 'VITE_FIREBASE_APP_ID', 'VITE_FIREBASE_APPCHECK_SITE_KEY')
+$requiredVariables = @('VITE_FIREBASE_API_KEY', 'VITE_FIREBASE_AUTH_DOMAIN', 'VITE_FIREBASE_PROJECT_ID', 'VITE_FIREBASE_STORAGE_BUCKET', 'VITE_FIREBASE_MESSAGING_SENDER_ID', 'VITE_FIREBASE_APP_ID', 'VITE_FIREBASE_APPCHECK_SITE_KEY', 'VITE_APPCHECK_PROVIDER')
 foreach ($variable in $requiredVariables) {
   if ([string]::IsNullOrWhiteSpace($stagingEnvironment[$variable])) {
     throw "Falta $variable en .env.staging.local. El despliegue de revision protegida no puede continuar."
@@ -66,6 +66,10 @@ foreach ($variable in $requiredVariables) {
 
 if ($stagingEnvironment['VITE_FIREBASE_PROJECT_ID'] -ne $ProjectId) {
   throw "VITE_FIREBASE_PROJECT_ID no coincide con ProjectId. Se esperaba $ProjectId y el despliegue se cancelo."
+}
+
+if ($stagingEnvironment['VITE_APPCHECK_PROVIDER'] -ne 'enterprise') {
+  throw 'VITE_APPCHECK_PROVIDER debe ser exactamente enterprise en staging. No se desplego nada.'
 }
 
 if ($stagingEnvironment['VITE_USE_FIREBASE_EMULATORS'] -eq 'true') {

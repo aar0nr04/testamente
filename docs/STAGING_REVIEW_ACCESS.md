@@ -11,7 +11,7 @@ Cloud Functions y Cloud Storage requieren el plan Blaze. Por ello, el script no 
 ## Preparar el destino
 
 1. Registrar `https://<STAGING_PROJECT_ID>.web.app` (y cualquier dominio de preview utilizado) en Authentication / Authorized domains y en App Check de la aplicación web de staging.
-2. Crear un archivo local, ignorado por Git, llamado `.env.staging.local` con los valores públicos `VITE_FIREBASE_*` y `VITE_FIREBASE_APPCHECK_SITE_KEY` de ese proyecto. El sitio de reCAPTCHA/App Check debe estar registrado para el dominio de staging. Mantener `VITE_AMAS_PUBLIC_ENABLED=false` y `VITE_AMAS_REVIEW_ENABLED=false` salvo que exista autorización material específica para AMAS.
+2. Crear un archivo local, ignorado por Git, llamado `.env.staging.local` con los valores públicos `VITE_FIREBASE_*`, `VITE_FIREBASE_APPCHECK_SITE_KEY` y `VITE_APPCHECK_PROVIDER=enterprise` de ese proyecto. El sitio de reCAPTCHA **Enterprise**/App Check debe estar registrado para el dominio de staging. Mantener `VITE_AMAS_PUBLIC_ENABLED=false` y `VITE_AMAS_REVIEW_ENABLED=false` salvo que exista autorización material específica para AMAS.
 3. Iniciar sesión en Firebase CLI con una cuenta que pueda desplegar **ese** proyecto de staging. No se almacenan tokens ni claves en el repositorio. Para usar el script de claims con Admin SDK, iniciar también Application Default Credentials con Google Cloud CLI; la sesión de Firebase CLI no sustituye este paso.
 
 En Windows PowerShell, desde la raíz del repositorio:

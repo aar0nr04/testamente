@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { createUserWithEmailAndPassword, onIdTokenChanged, reload, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, signOut, type IdTokenResult, type User } from 'firebase/auth';
-import { auth, googleProvider, requireAuth } from '../lib/firebase';
+import { auth, confirmAppCheckToken, googleProvider, requireAuth } from '../lib/firebase';
 import { firebaseConfigurationMessage } from '../lib/env';
 import { createRegistrationProfile, getOrCreateProfile } from '../repositories/profileRepository';
 import type { UserProfile, UserRole } from '../types/domain';
@@ -27,6 +27,7 @@ interface AuthContextValue extends PermissionClaims {
   hasStaffAccess: boolean;
   user: User | null;
   profile: UserProfile | null;
+  appCheckReady: boolean;
   loading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
@@ -61,6 +62,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [claims, setClaims] = useState<PermissionClaims>(emptyPermissionClaims);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [appCheckReady, setAppCheckReady] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void confirmAppCheckToken().then((ready) => {
+      if (active) setAppCheckReady(ready);
+    }).catch(() => {
+      if (active) setAppCheckReady(false);
+    });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     if (!auth) {
@@ -91,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<AuthContextValue>(() => ({
-    user, profile, loading, error, ...claims, hasStaffAccess: claims.isOwner || claims.isAdmin || claims.isProfessionalReviewer,
+    user, profile, appCheckReady, loading, error, ...claims, hasStaffAccess: claims.isOwner || claims.isAdmin || claims.isProfessionalReviewer,
     async login(email, password) {
       setError(null);
       const configuredAuth = requireAuth();
@@ -167,7 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return nextClaims;
     },
     async resetPassword(email) { await sendPasswordResetEmail(requireAuth(), email); },
-  }), [claims, error, loading, profile, user]);
+  }), [appCheckReady, claims, error, loading, profile, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -1,6 +1,5 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { appEnv } from '../../lib/env';
 import type { PrivilegedClaim } from '../../types/domain';
 
 export interface RouteAccessState {
@@ -49,13 +48,13 @@ export function RequireProjectPermission({ permission }: { permission: ProjectPe
 }
 
 export function RequirePermission({ anyOf, verified = true, requiresAppCheck = false }: { anyOf: PrivilegedClaim[]; verified?: boolean; requiresAppCheck?: boolean }) {
-  const { user, loading, isOwner, isAdmin, isProfessionalReviewer } = useAuth();
+  const { user, loading, appCheckReady, isOwner, isAdmin, isProfessionalReviewer } = useAuth();
   const location = useLocation();
   if (loading) return <p className="status">Cargando sesión…</p>;
   const state: RouteAccessState = {
     signedIn: Boolean(user),
     emailVerified: Boolean(user?.emailVerified),
-    appCheckReady: appEnv.useFirebaseEmulators || Boolean(appEnv.appCheckSiteKey),
+    appCheckReady,
     claims: { owner: isOwner, admin: isAdmin, professional_reviewer: isProfessionalReviewer },
   };
   if (!state.signedIn) return <Navigate to="/login" replace state={{ from: location.pathname }} />;

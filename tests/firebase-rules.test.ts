@@ -64,7 +64,8 @@ describe('Firestore security rules', () => {
   it('allows only claimed reviewers to create professional reviews and keeps license writes off the browser', async () => {
     const review = { instrumentId: 'gad-7', contentVersion: '1', algorithmVersion: '1', locale: 'es', reviewerId: reviewer, status: 'in_review', questionComments: {}, scoringComments: '', interpretationComments: '', translationComments: '', generalComments: '', createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
     await assertFails(setDoc(doc(testEnv.authenticatedContext(patientA).firestore(), 'testProfessionalReviews/r1'), review));
-    await assertSucceeds(setDoc(doc(testEnv.authenticatedContext(reviewer, { professional_reviewer: true }).firestore(), 'testProfessionalReviews/r1'), review));
+    await assertFails(setDoc(doc(testEnv.authenticatedContext(reviewer, { professional_reviewer: true }).firestore(), 'testProfessionalReviews/r1'), review));
+    await assertSucceeds(setDoc(doc(testEnv.authenticatedContext(reviewer, { professional_reviewer: true, email_verified: true }).firestore(), 'testProfessionalReviews/r1'), review));
     await assertFails(setDoc(doc(testEnv.authenticatedContext(reviewer, { professional_reviewer: true }).firestore(), 'instrumentLicenses/gad-7'), { status: 'licensed' }));
     await assertFails(setDoc(doc(testEnv.authenticatedContext(admin, { admin: true }).firestore(), 'instrumentLicenses/gad-7'), { status: 'licensed' }));
   });

@@ -3,9 +3,11 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function self(uid) { return signedIn() && request.auth.uid == uid; }
+    function verifiedEmail() { return signedIn() && request.auth.token.keys().hasAny(['email_verified']) && request.auth.token.email_verified == true; }
     function hasClaim(name) { return signedIn() && request.auth.token.keys().hasAny([name]) && request.auth.token[name] == true && (!request.auth.token.keys().hasAny(['staff_expires_at']) || request.auth.token.staff_expires_at > request.time.toMillis()); }
     function adminOrOwner() { return hasClaim('admin') || hasClaim('owner'); }
     function reviewer() { return hasClaim('professional_reviewer') || adminOrOwner(); }
+    function verifiedReviewer() { return verifiedEmail() && reviewer(); }
     function serverNow(field) { return request.resource.data[field] == request.time; }
     function publicUserKeys() { return ['uid', 'email', 'role', 'name', 'photoUrl', 'phone', 'lang', 'dob', 'gender', 'country', 'state', 'city', 'timeZone', 'termsAccepted', 'termsAcceptedAt', 'termsVersion', 'consents', 'patientPrefs', 'professional', 'createdAt', 'updatedAt']; }
     function editableUserKeys() { return ['name', 'photoUrl', 'phone', 'lang', 'dob', 'gender', 'country', 'state', 'city', 'timeZone', 'consents', 'patientPrefs', 'professional', 'updatedAt']; }
@@ -140,9 +142,9 @@ service cloud.firestore {
       }
     }
     match /testProfessionalReviews/{reviewId} {
-      allow read: if reviewer();
-      allow create: if reviewer() && request.resource.data.reviewerId == request.auth.uid && serverNow('createdAt') && serverNow('updatedAt');
-      allow update: if reviewer() && resource.data.reviewerId == request.auth.uid && request.resource.data.reviewerId == resource.data.reviewerId && request.resource.data.instrumentId == resource.data.instrumentId && serverNow('updatedAt');
+      allow read: if verifiedReviewer();
+      allow create: if verifiedReviewer() && request.resource.data.reviewerId == request.auth.uid && serverNow('createdAt') && serverNow('updatedAt');
+      allow update: if verifiedReviewer() && resource.data.reviewerId == request.auth.uid && request.resource.data.reviewerId == resource.data.reviewerId && request.resource.data.instrumentId == resource.data.instrumentId && serverNow('updatedAt');
       allow delete: if false;
     }
     match /{document=**} { allow read, write: if false; }

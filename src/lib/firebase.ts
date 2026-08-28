@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
+import { getToken, initializeAppCheck, ReCaptchaEnterpriseProvider, ReCaptchaV3Provider, type AppCheck } from 'firebase/app-check';
 import { connectAuthEmulator, getAuth, GoogleAuthProvider, type Auth } from 'firebase/auth';
 import { connectFirestoreEmulator, getFirestore, type Firestore } from 'firebase/firestore';
 import { connectFunctionsEmulator, getFunctions, type Functions } from 'firebase/functions';
@@ -13,7 +13,19 @@ export const storage = firebaseApp ? getStorage(firebaseApp) : undefined;
 export const functions = firebaseApp ? getFunctions(firebaseApp, appEnv.functionsRegion) : undefined;
 export const googleProvider = firebaseApp ? new GoogleAuthProvider() : undefined;
 
-if (firebaseApp && appEnv.appCheckSiteKey && typeof window !== 'undefined') initializeAppCheck(firebaseApp, { provider: new ReCaptchaV3Provider(appEnv.appCheckSiteKey), isTokenAutoRefreshEnabled: true });
+export const appCheck: AppCheck | undefined = firebaseApp && appEnv.appCheckSiteKey && typeof window !== 'undefined' ? (() => {
+  const provider = appEnv.appCheckProvider === 'enterprise'
+    ? new ReCaptchaEnterpriseProvider(appEnv.appCheckSiteKey)
+    : new ReCaptchaV3Provider(appEnv.appCheckSiteKey);
+  return initializeAppCheck(firebaseApp, { provider, isTokenAutoRefreshEnabled: true });
+})() : undefined;
+
+export async function confirmAppCheckToken(): Promise<boolean> {
+  if (appEnv.useFirebaseEmulators) return true;
+  if (!appCheck) return false;
+  const result = await getToken(appCheck);
+  return Boolean(result.token);
+}
 if (auth && db && storage && functions && appEnv.useFirebaseEmulators && import.meta.env.DEV) {
   connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
   connectFirestoreEmulator(db, '127.0.0.1', 8081);

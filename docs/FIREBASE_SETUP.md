@@ -4,7 +4,7 @@
 
 - Auth: email/contraseña, verificación, recuperación de contraseña y Google Sign-In están conectados en cliente cuando la configuración existe.
 - Firestore, Storage y Functions se inicializan sólo si están presentes las seis variables requeridas. Si falta una, el cliente muestra el nombre exacto de la variable y no crea una aplicación Firebase con valores ficticios.
-- App Check usa reCAPTCHA v3 cuando existe `VITE_FIREBASE_APPCHECK_SITE_KEY`.
+- App Check usa el proveedor indicado por `VITE_APPCHECK_PROVIDER`: `v3` por defecto para entornos existentes y `enterprise` para el staging de Testamente. El proveedor se selecciona antes de inicializar Firebase, para no cambiar producción por accidente; las áreas protegidas no se consideran listas hasta que el SDK emite un token.
 - Los emuladores están definidos en `firebase.json`: Auth `9099`, Firestore `8081`, Functions `5001` y Storage `9199`. Usar `VITE_USE_FIREBASE_EMULATORS=true` sólo en desarrollo.
 - `functions/src/index.ts` entrega payloads privados exclusivamente mediante callable con App Check, Custom Claims, allowlist con expiración, configuración de licencia y auditoría sin contenido.
 
@@ -21,6 +21,7 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=
 VITE_FIREBASE_APP_ID=
 VITE_FIREBASE_MEASUREMENT_ID=
 VITE_FIREBASE_APPCHECK_SITE_KEY=
+VITE_APPCHECK_PROVIDER=v3
 VITE_FIREBASE_FUNCTIONS_REGION=us-central1
 VITE_USE_FIREBASE_EMULATORS=false
 VITE_AMAS_PUBLIC_ENABLED=false
@@ -33,7 +34,7 @@ VITE_AMAS_REVIEW_ENABLED=false
 
 1. Firebase Console → **Project settings** → **Your apps** → **Web app** → copiar cada configuración del SDK a `.env.local`/secretos del entorno. No usar el `mobilesdk_app_id` Android.
 2. Firebase Console → **Authentication** → **Sign-in method** → activar **Email/Password** y **Google**; en **Settings → Authorized domains** añadir el dominio de staging y `testamente.app`.
-3. Firebase Console → **App Check** → registrar la app web → seleccionar reCAPTCHA Enterprise o v3 → copiar únicamente el site key público a `VITE_FIREBASE_APPCHECK_SITE_KEY`; activar enforcement de Auth, Firestore, Storage y Functions después de probar staging.
+3. Firebase Console → **App Check** → registrar la app web → seleccionar reCAPTCHA Enterprise o v3 → copiar únicamente el site key público a `VITE_FIREBASE_APPCHECK_SITE_KEY`. Usar `VITE_APPCHECK_PROVIDER=enterprise` para una app registrada con Enterprise. Activar enforcement de Auth, Firestore, Storage y Functions después de probar staging.
 4. Firebase Console/CLI con Admin SDK controlado por el propietario → asignar Custom Claims `owner`, `admin` o `professional_reviewer`. Ningún flujo del cliente puede asignarlas. Forzar renovación de token tras el cambio.
 5. Storage → crear la ruta privada `licensed-test-payloads/amas-a/<versión>.json`. No conceder reglas de lectura al cliente.
 6. Firestore mediante Admin SDK → crear `privateInstrumentConfigs/amas-a` con `enabled`, `mode`, `contentVersion`, `algorithmVersion` y `payloadPath`; crear `privateInstrumentAccess/amas-a_<uid>` con `expiresAt`. Proveer al propietario/Functions los reactivos, subescalas, dirección de puntuación, baremos y golden cases autorizados.
