@@ -62,6 +62,6 @@ function CatalogCard({ test }: { test: ReturnType<typeof getCatalogForLocale>[nu
     <h2>{test.title}</h2><p>{test.description}</p>
     <div className="tag-row"><span className="tag">{catalogStatusLabel(test.licenseStatus)}</span><span className="tag">{catalogStatusLabel(test.accessMode)}</span><span className="tag">{catalogStatusLabel(test.technicalStatus)}</span><span className="tag">{catalogStatusLabel(test.clinicalStatus)}</span></div>
     <div className="tag-row">{(test.tags ?? []).slice(0, 3).map((tag) => <span key={tag} className="tag">{tag}</span>)}</div>
-    {test.payloadAvailable ? <Link to={`/tests/${test.id}`} className="button-link">Ver detalle</Link> : <p className="muted">Payload protegido. Requiere flujo de licencia y revisión autorizada.</p>}
+    {test.payloadAvailable ? <Link to={`/tests/${test.id}`} className="button-link">Ver detalle</Link> : test.reviewAvailable ? <p className="muted">Disponible para revisión profesional autorizada; aún no está publicado.</p> : <p className="muted">Payload protegido. Requiere flujo de licencia y revisión autorizada.</p>}
   </article>;
 }

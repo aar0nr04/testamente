@@ -32,6 +32,7 @@ describe('Firestore security rules', () => {
   it('allows a patient to create only their own immutable result with a server timestamp', async () => {
     const database = testEnv.authenticatedContext(patientA).firestore();
     await assertSucceeds(setDoc(doc(database, `users/${patientA}/testResults/result-a`), { userId: patientA, instrumentId: 'gad-7', completedAt: '2026-07-24T00:00:00.000Z', createdAt: serverTimestamp() }));
+    await assertFails(setDoc(doc(database, `users/${patientA}/testResults/result-a`), { userId: patientA, instrumentId: 'gad-7', completedAt: '2026-07-24T00:01:00.000Z', createdAt: serverTimestamp() }));
     await assertFails(setDoc(doc(database, `users/${patientA}/testResults/result-b`), { userId: patientB, instrumentId: 'gad-7', createdAt: serverTimestamp() }));
   });
 

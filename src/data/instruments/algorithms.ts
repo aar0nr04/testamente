@@ -27,4 +27,21 @@ export const phq9Algorithm: InstrumentAlgorithm = {
   alerts: [{ itemId: 'phq9', minimumValue: 1, code: 'self_harm_follow_up', message: 'A positive response to item 9 requires immediate professional follow-up; this app must show local emergency resources.' }],
 };
 
-export const instrumentAlgorithms = { 'gad-7': gad7Algorithm, 'phq-9': phq9Algorithm } as const;
+export const rsesAlgorithm: InstrumentAlgorithm = {
+  instrumentId: 'rses',
+  algorithmVersion: '2026.08.1',
+  items: Array.from({ length: 10 }, (_, index) => ({
+    id: `rses${index + 1}`,
+    kind: 'likert' as const,
+    options: likertOptions,
+    min: 0,
+    max: 3,
+    reverse: [3, 5, 8, 9, 10].includes(index + 1),
+    scaleWeights: { total: 1 },
+  })),
+  scales: [{ id: 'total', label: 'Total self-esteem score' }],
+  // The primary source documents the 0–30 score but does not establish a universal diagnostic cutoff.
+  total: { kind: 'sum', scaleIds: ['total'], ranges: [] },
+};
+
+export const instrumentAlgorithms = { rses: rsesAlgorithm, 'gad-7': gad7Algorithm, 'phq-9': phq9Algorithm } as const;
