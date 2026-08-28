@@ -7,12 +7,13 @@ import { stdin as input, stdout as output } from 'node:process';
 const roles = new Set(['owner', 'admin', 'professional_reviewer']);
 const [command, uid, role, ...flags] = process.argv.slice(2);
 const confirm = flags.includes('--confirm');
+const dryRun = flags.includes('--dry-run');
 
 function usage() {
   console.log(`Uso:
   node scripts/set-user-claims.mjs query <uid>
-  node scripts/set-user-claims.mjs grant <uid> <owner|admin|professional_reviewer> --confirm
-  node scripts/set-user-claims.mjs remove <uid> <owner|admin|professional_reviewer> --confirm
+  node scripts/set-user-claims.mjs grant <uid> <owner|admin|professional_reviewer> --confirm [--dry-run]
+  node scripts/set-user-claims.mjs remove <uid> <owner|admin|professional_reviewer> --confirm [--dry-run]
 
 Requiere GOOGLE_APPLICATION_CREDENTIALS apuntando a una cuenta de servicio local o Application Default Credentials. No se guardan credenciales en este repositorio.`);
 }
@@ -37,8 +38,11 @@ else if (command !== 'query' && (!roles.has(role) || !confirm)) {
     if (answer !== uid) { console.error('Confirmación cancelada: el UID no coincide.'); process.exitCode = 1; }
     else {
       // Merge with the existing map; unrelated custom claims are deliberately preserved.
-      await auth.setCustomUserClaims(uid, next);
-      console.log(`Claims actualizados para ${uid}. El usuario debe renovar su token o volver a iniciar sesión.`);
+      if (dryRun) console.log(JSON.stringify({ dryRun: true, uid, command, role, currentClaims: current, proposedClaims: next }, null, 2));
+      else {
+        await auth.setCustomUserClaims(uid, next);
+        console.log(`Claims actualizados para ${uid}. El usuario debe renovar su token o volver a iniciar sesión.`);
+      }
     }
   }
 }

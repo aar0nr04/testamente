@@ -1,5 +1,6 @@
 import { gad7Content } from './content/gad7';
 import { phq9Content } from './content/phq9';
+import { rsesContent } from './content/rses';
 import { instrumentAlgorithms } from './algorithms';
 import type { InstrumentLocale, InstrumentRegistryRecord, LocalizedInstrumentContent, LocaleStatus } from './types';
 
@@ -9,7 +10,9 @@ const pending = (id: string, slug: string, fullName: string, abbreviation: strin
 });
 
 export const instrumentRegistry: InstrumentRegistryRecord[] = [
-  pending('rses', 'rosenberg-self-esteem', 'Escala de Autoestima de Rosenberg', 'RSES', ['Morris Rosenberg'], 1965, 10, 'Autoestima / Bienestar', [{ label: 'Society and the Adolescent Self-Image', url: 'https://psycnet.apa.org/record/1965-35041-000', kind: 'primary' }], 'No se ha verificado un permiso digital/comercial ni las traducciones.'),
+  {
+    id: 'rses', slug: 'rosenberg-self-esteem', fullName: 'Escala de Autoestima de Rosenberg', abbreviation: 'RSES', authors: ['Morris Rosenberg'], year: 1965, version: 'v1', category: 'Clínicos', subcategory: 'Autoestima / Bienestar', description: 'Escala breve de autoestima global; no establece por sí sola un diagnóstico ni un punto de corte clínico universal.', estimatedMinutes: 3, questionCount: 10, tags: ['autoestima', 'rosenberg'], sourceReferences: [{ label: 'University of Maryland RSES usage and scoring', url: 'https://socy.umd.edu/about-us/using-rosenberg-self-esteem-scale', kind: 'official_license' }], licenseStatus: 'permission_not_required', accessMode: 'public', implementationStatus: 'content_implemented', scoringStatus: 'technical_validated', clinicalReviewStatus: 'pending', availableLocales: ['en'], localeStatus: { ...allLocales(), en: 'technical_validated' }, published: false, featureFlag: 'VITE_RSES_PUBLIC_ENABLED', currentAlgorithmVersion: '2026.08.1', currentContentVersion: '2026.08.1', lastReviewedAt: '2026-08-27', reviewedBy: 'source-audit', notes: 'La fuente oficial declara la escala de dominio público. Sólo se incorporó el original en inglés; no se presenta una traducción como validada.',
+  },
   pending('swls', 'swls-life-satisfaction', 'Satisfaction With Life Scale', 'SWLS', ['Ed Diener', 'Robert A. Emmons', 'Randy J. Larsen', 'Sharon Griffin'], 1985, 5, 'Autoestima / Bienestar', [{ label: 'Original validation', url: 'https://doi.org/10.1207/s15327752jpa4901_13', kind: 'primary' }], 'Pendiente confirmar términos de reproducción digital y traducciones.'),
   pending('subjective-happiness-scale', 'subjective-happiness-scale', 'Escala de Felicidad Subjetiva', 'SHS', ['Sonja Lyubomirsky', 'Heidi Lepper'], 1999, 4, 'Autoestima / Bienestar', [{ label: 'Original validation', url: 'https://doi.org/10.1207/S15327752JPA7801_15', kind: 'primary' }], 'Pendiente permiso de reproducción y adaptación.'),
   pending('ryff', 'ryff-psychological-wellbeing', 'Escala de Bienestar Psicológico de Ryff', 'RPWB', ['Carol D. Ryff'], 1989, 18, 'Autoestima / Bienestar', [{ label: 'Original publication', url: 'https://doi.org/10.1007/BF00292643', kind: 'primary' }], 'La versión (18, 42, 54, 84 o 120 ítems) y su permiso deben definirse antes de contenido.'),
@@ -36,7 +39,7 @@ export const instrumentRegistry: InstrumentRegistryRecord[] = [
   { ...pending('amas-a', 'amas-a', 'Adult Manifest Anxiety Scale – Adult', 'AMAS-A', ['Cecil R. Reynolds', 'Bert O. Richmond', 'Kristina Lowe'], 2003, 36, 'Ansiedad / Estrés', [{ label: 'PAR product catalogue', url: 'https://www.parinc.com/', kind: 'official_license' }], 'Payload únicamente desde Storage privado, con allowlist, caducidad, auditoría y baremos suministrados por el propietario.'), licenseStatus: 'restricted', accessMode: 'review_private', implementationStatus: 'blocked_reference_data', scoringStatus: 'pending_reference_data', featureFlag: 'VITE_AMAS_PUBLIC_ENABLED' },
 ];
 
-export const contentByInstrument: Record<string, Partial<Record<InstrumentLocale, LocalizedInstrumentContent>>> = { 'gad-7': gad7Content, 'phq-9': phq9Content };
+export const contentByInstrument: Record<string, Partial<Record<InstrumentLocale, LocalizedInstrumentContent>>> = { rses: rsesContent, 'gad-7': gad7Content, 'phq-9': phq9Content };
 export { instrumentAlgorithms };
 
 export function getInstrument(id: string): InstrumentRegistryRecord | undefined { return instrumentRegistry.find((instrument) => instrument.id === id || instrument.slug === id); }

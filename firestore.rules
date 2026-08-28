@@ -3,18 +3,18 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function self(uid) { return signedIn() && request.auth.uid == uid; }
-    function hasClaim(name) { return signedIn() && request.auth.token.keys().hasAny([name]) && request.auth.token[name] == true; }
+    function hasClaim(name) { return signedIn() && request.auth.token.keys().hasAny([name]) && request.auth.token[name] == true && (!request.auth.token.keys().hasAny(['staff_expires_at']) || request.auth.token.staff_expires_at > request.time.toMillis()); }
     function adminOrOwner() { return hasClaim('admin') || hasClaim('owner'); }
     function reviewer() { return hasClaim('professional_reviewer') || adminOrOwner(); }
     function serverNow(field) { return request.resource.data[field] == request.time; }
     function publicUserKeys() { return ['uid', 'email', 'role', 'name', 'photoUrl', 'phone', 'lang', 'dob', 'gender', 'country', 'state', 'city', 'timeZone', 'termsAccepted', 'termsAcceptedAt', 'termsVersion', 'consents', 'patientPrefs', 'professional', 'createdAt', 'updatedAt']; }
     function editableUserKeys() { return ['name', 'photoUrl', 'phone', 'lang', 'dob', 'gender', 'country', 'state', 'city', 'timeZone', 'consents', 'patientPrefs', 'professional', 'updatedAt']; }
-    function editableProfessionalKeys() { return ['headline', 'description', 'specialties', 'languages', 'modalities', 'priceMXN', 'sessionMinutes', 'isPublicPhone', 'isPublicLocation', 'availability', 'acceptingNewPatients', 'licenseNumber']; }
+    function editableProfessionalKeys() { return ['headline', 'description', 'specialties', 'languages', 'modalities', 'priceMXN', 'currency', 'isPublicPrice', 'sessionMinutes', 'isPublicPhone', 'isPublicLocation', 'availability', 'acceptingNewPatients', 'licenseNumber', 'professionalLinks', 'education', 'experience', 'publications', 'researchAreas']; }
     function validInitialProfessional() {
       return request.resource.data.professional.keys().hasAll(['isVerified', 'approvalStatus'])
         && request.resource.data.professional.keys().hasOnly(editableProfessionalKeys().concat(['isVerified', 'approvalStatus']))
         && request.resource.data.professional.isVerified == false
-        && request.resource.data.professional.approvalStatus == 'pending';
+        && request.resource.data.professional.approvalStatus in ['draft', 'pending'];
     }
     function compatibleInitialProfessional() {
       return (request.resource.data.role == 'patient' && !request.resource.data.keys().hasAny(['professional']))
@@ -25,25 +25,31 @@ service cloud.firestore {
         || (resource.data.keys().hasAll(['professional']) && request.resource.data.keys().hasAll(['professional'])
           && request.resource.data.professional.isVerified == resource.data.professional.isVerified
           && request.resource.data.professional.approvalStatus == resource.data.professional.approvalStatus
+          && !request.resource.data.professional.diff(resource.data.professional).affectedKeys().hasAny(['approvedBy', 'approvedAt', 'verifiedLicenseNumber', 'approvalNote', 'approvalUpdatedAt'])
           && request.resource.data.professional.diff(resource.data.professional).affectedKeys().hasOnly(editableProfessionalKeys()));
     }
     function safeNewUser(uid) {
-      return self(uid)
-        && request.resource.data.keys().hasOnly(publicUserKeys())
-        && request.resource.data.uid == uid
-        && request.resource.data.role in ['patient', 'psychologist']
-        && compatibleInitialProfessional()
+      return self(uid) && request.resource.data.keys().hasOnly(publicUserKeys()) && request.resource.data.uid == uid
+        && request.resource.data.role in ['patient', 'psychologist'] && compatibleInitialProfessional()
         && serverNow('createdAt') && serverNow('updatedAt');
     }
     function safeUserUpdate(uid) {
-      return self(uid)
-        && request.resource.data.uid == resource.data.uid
-        && request.resource.data.role == resource.data.role
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(editableUserKeys())
-        && preservesProfessionalApproval()
-        && serverNow('updatedAt');
+      return self(uid) && request.resource.data.uid == resource.data.uid && request.resource.data.role == resource.data.role
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(editableUserKeys()) && preservesProfessionalApproval() && serverNow('updatedAt');
     }
     function appointmentParticipant(data) { return signedIn() && request.auth.uid in data.participantIds; }
+    function hasProjectRole(projectId, roles) {
+      return signedIn() && exists(/databases/$(database)/documents/instrumentProjects/$(projectId)/collaborators/$(request.auth.uid))
+        && get(/databases/$(database)/documents/instrumentProjects/$(projectId)/collaborators/$(request.auth.uid)).data.active == true
+        && get(/databases/$(database)/documents/instrumentProjects/$(projectId)/collaborators/$(request.auth.uid)).data.role in roles;
+    }
+    function projectMember(projectId) { return adminOrOwner() || hasProjectRole(projectId, ['owner', 'author', 'editor', 'technical_reviewer', 'clinical_reviewer', 'translator', 'viewer']); }
+    function projectEditor(projectId) { return hasProjectRole(projectId, ['owner', 'author', 'editor']); }
+    function projectOwner(projectId) { return hasProjectRole(projectId, ['owner']); }
+    function technicalReviewer(projectId) { return hasProjectRole(projectId, ['technical_reviewer', 'owner']); }
+    function clinicalReviewer(projectId) { return hasProjectRole(projectId, ['clinical_reviewer', 'owner']); }
+    function psychologist() { return signedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'psychologist'; }
+    function projectCreator() { return psychologist() && request.resource.data.createdBy == request.auth.uid && request.resource.data.ownerId == request.auth.uid && request.resource.data.status == 'draft' && request.resource.data.originType in ['psychologist_original', 'institution_original']; }
 
     match /users/{uid} {
       allow read: if self(uid) || adminOrOwner();
@@ -59,39 +65,80 @@ service cloud.firestore {
       match /appointments/{appointmentId} { allow read: if self(uid) || adminOrOwner(); allow write: if false; }
     }
 
-    // Only a Cloud Function running with Admin SDK publishes sanitized public profiles.
+    // Only backend Functions publish sanitized professional profiles and administrative records.
     match /publicPsychologistProfiles/{uid} { allow read: if true; allow write: if false; }
-    match /tests/{testId} { allow read: if true; allow write: if adminOrOwner(); }
-    match /instrumentLicenses/{instrumentId} { allow read: if reviewer(); allow write: if false; }
-    match /licensedTests/{testId}/versions/{versionId} { allow read, write: if false; }
+    match /staffAccess/{uid} { allow read, write: if false; }
+    match /auditLogs/{auditId} { allow read, write: if false; }
     match /privateInstrumentConfigs/{instrumentId} { allow read, write: if false; }
     match /privateInstrumentAccess/{accessId} { allow read, write: if false; }
     match /privatePayloadAudit/{auditId} { allow read, write: if false; }
     match /adminAudit/{auditId} { allow read, write: if false; }
     match /entitlements/{uid} { allow read: if self(uid) || adminOrOwner(); allow write: if false; }
+    match /instrumentLicenses/{instrumentId} { allow read: if reviewer(); allow write: if false; }
+    match /licensedTests/{testId}/versions/{versionId} { allow read, write: if false; }
+    match /tests/{testId} { allow read: if true; allow write: if adminOrOwner(); }
 
-    match /appointments/{appointmentId} {
-      allow read: if appointmentParticipant(resource.data) || adminOrOwner();
-      allow create: if self(request.resource.data.patientId)
-        && request.resource.data.patientId in request.resource.data.participantIds
-        && request.resource.data.psychologistId in request.resource.data.participantIds
-        && serverNow('createdAt') && serverNow('updatedAt');
-      allow update: if appointmentParticipant(resource.data)
-        && request.resource.data.participantIds == resource.data.participantIds
-        && request.resource.data.patientId == resource.data.patientId
-        && request.resource.data.psychologistId == resource.data.psychologistId
-        && serverNow('updatedAt');
+    match /instrumentProjects/{projectId} {
+      allow read: if projectMember(projectId);
+      allow create: if projectCreator() && serverNow('createdAt') && serverNow('updatedAt');
+      allow update: if projectOwner(projectId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title', 'description', 'category', 'subcategory', 'rightsMetadata', 'updatedAt']) && serverNow('updatedAt');
       allow delete: if false;
-      match /messages/{messageId} {
-        allow read: if appointmentParticipant(get(/databases/$(database)/documents/appointments/$(appointmentId)).data) || adminOrOwner();
-        allow create: if appointmentParticipant(get(/databases/$(database)/documents/appointments/$(appointmentId)).data)
-          && request.resource.data.senderId == request.auth.uid
-          && request.resource.data.participantIds == get(/databases/$(database)/documents/appointments/$(appointmentId)).data.participantIds
-          && serverNow('createdAt');
+
+      match /collaborators/{uid} {
+        allow read: if projectMember(projectId);
+        allow create: if self(uid) && request.resource.data.uid == uid && request.resource.data.role == 'owner' && getAfter(/databases/$(database)/documents/instrumentProjects/$(projectId)).data.ownerId == uid;
         allow update, delete: if false;
+      }
+      match /drafts/{draftId} {
+        allow read: if projectMember(projectId);
+        allow create: if projectEditor(projectId) && request.resource.data.projectId == projectId && request.resource.data.status == 'draft' && request.resource.data.lastEditedBy == request.auth.uid;
+        allow update: if projectEditor(projectId) && request.resource.data.status == resource.data.status && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title', 'description', 'locales', 'algorithm', 'contentVersion', 'algorithmVersion', 'releaseNotes', 'revision', 'lastEditedBy', 'lock', 'updatedAt']) && request.resource.data.lastEditedBy == request.auth.uid;
+        allow delete: if false;
+        match /questions/{questionId} {
+          allow read: if projectMember(projectId);
+          allow create, update, delete: if projectEditor(projectId) && get(/databases/$(database)/documents/instrumentProjects/$(projectId)/drafts/$(draftId)).data.status == 'draft';
+        }
+      }
+      match /validationCases/{caseId} {
+        allow read: if projectMember(projectId);
+        allow create: if projectEditor(projectId) && request.resource.data.createdBy == request.auth.uid && request.resource.data.status == 'draft';
+        allow update: if (projectEditor(projectId) && request.resource.data.status == resource.data.status) || technicalReviewer(projectId);
+        allow delete: if projectOwner(projectId);
+      }
+      match /reviewThreads/{threadId} {
+        allow read: if projectMember(projectId);
+        allow create: if (technicalReviewer(projectId) || clinicalReviewer(projectId) || hasProjectRole(projectId, ['translator'])) && request.resource.data.authorId == request.auth.uid && request.resource.data.status == 'open';
+        allow update: if (request.auth.uid == resource.data.authorId || projectOwner(projectId)) && request.resource.data.targetType == resource.data.targetType && request.resource.data.targetId == resource.data.targetId;
+        allow delete: if false;
+      }
+      match /changeRequests/{changeRequestId} {
+        allow read: if projectMember(projectId);
+        allow create: if projectEditor(projectId) && request.resource.data.authorId == request.auth.uid && request.resource.data.status == 'draft';
+        allow update: if projectMember(projectId) && request.resource.data.authorId == resource.data.authorId;
+        allow delete: if request.auth.uid == resource.data.authorId && resource.data.status == 'draft';
+      }
+      match /approvals/{approvalId} {
+        allow read: if projectMember(projectId);
+        allow create: if request.resource.data.reviewerId == request.auth.uid && get(/databases/$(database)/documents/instrumentProjects/$(projectId)).data.createdBy != request.auth.uid && ((request.resource.data.type == 'technical' && technicalReviewer(projectId)) || (request.resource.data.type == 'clinical' && clinicalReviewer(projectId)) || (request.resource.data.type == 'translation' && hasProjectRole(projectId, ['translator'])));
+        allow update, delete: if false;
+      }
+      match /versions/{versionId} {
+        allow read: if resource.data.status == 'published' || projectMember(projectId);
+        allow write: if false;
       }
     }
 
+    match /appointments/{appointmentId} {
+      allow read: if appointmentParticipant(resource.data) || adminOrOwner();
+      allow create: if self(request.resource.data.patientId) && request.resource.data.patientId in request.resource.data.participantIds && request.resource.data.psychologistId in request.resource.data.participantIds && serverNow('createdAt') && serverNow('updatedAt');
+      allow update: if appointmentParticipant(resource.data) && request.resource.data.participantIds == resource.data.participantIds && request.resource.data.patientId == resource.data.patientId && request.resource.data.psychologistId == resource.data.psychologistId && serverNow('updatedAt');
+      allow delete: if false;
+      match /messages/{messageId} {
+        allow read: if appointmentParticipant(get(/databases/$(database)/documents/appointments/$(appointmentId)).data) || adminOrOwner();
+        allow create: if appointmentParticipant(get(/databases/$(database)/documents/appointments/$(appointmentId)).data) && request.resource.data.senderId == request.auth.uid && request.resource.data.participantIds == get(/databases/$(database)/documents/appointments/$(appointmentId)).data.participantIds && serverNow('createdAt');
+        allow update, delete: if false;
+      }
+    }
     match /testProfessionalReviews/{reviewId} {
       allow read: if reviewer();
       allow create: if reviewer() && request.resource.data.reviewerId == request.auth.uid && serverNow('createdAt') && serverNow('updatedAt');

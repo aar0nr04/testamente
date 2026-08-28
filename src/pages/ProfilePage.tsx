@@ -3,6 +3,7 @@ import { useEffect, useState, type ChangeEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { requireStorage } from '../lib/firebase';
 import { editableProfessional, updateProfile } from '../repositories/profileRepository';
+import { submitProfessionalProfile } from '../lib/admin';
 import type { LocaleCode, ProfessionalProfile } from '../types/domain';
 
 const days = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'] as const;
@@ -17,6 +18,7 @@ export function ProfilePage() {
   const [phone, setPhone] = useState('');
   const [timeZone, setTimeZone] = useState('');
   const [city, setCity] = useState('');
+  const [country, setCountry] = useState('');
   const [state, setState] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
   const [professional, setProfessional] = useState<Partial<ProfessionalProfile>>({});
@@ -26,7 +28,7 @@ export function ProfilePage() {
   useEffect(() => {
     if (!profile) return;
     setName(profile.name ?? ''); setPhone(profile.phone ?? ''); setTimeZone(profile.timeZone ?? '');
-    setCity(profile.city ?? ''); setState(profile.state ?? ''); setPhotoUrl(profile.photoUrl ?? '');
+    setCity(profile.city ?? ''); setState(profile.state ?? ''); setCountry(profile.country ?? ''); setPhotoUrl(profile.photoUrl ?? '');
     setProfessional(profile.professional ?? {});
   }, [profile]);
 
@@ -56,12 +58,18 @@ export function ProfilePage() {
     setSaving(true); setMessage('');
     try {
       await updateProfile(uid, {
-        name, phone, timeZone, city, state, photoUrl,
+        name, phone, timeZone, city, state, country, photoUrl,
         professional: isPsychologist ? editableProfessional(professional) : undefined,
       });
       setMessage('Perfil actualizado. Los datos de aprobación se revisan fuera de este formulario.');
     } catch { setMessage('No se pudo actualizar el perfil.'); }
     finally { setSaving(false); }
+  }
+
+  async function submitForReview() {
+    setMessage('');
+    try { await submitProfessionalProfile(); setMessage('Perfil enviado a revisión administrativa. Renueva la página para consultar el estado.'); }
+    catch (reason) { setMessage(reason instanceof Error ? reason.message : 'No se pudo enviar el perfil a revisión.'); }
   }
 
   return <section className="panel stack profile-page">
@@ -77,6 +85,7 @@ export function ProfilePage() {
       <label>Zona horaria<input placeholder="America/Mexico_City" value={timeZone} onChange={(event) => setTimeZone(event.target.value)} /></label>
       <label>Estado<input value={state} onChange={(event) => setState(event.target.value)} /></label>
       <label>Ciudad<input value={city} onChange={(event) => setCity(event.target.value)} /></label>
+      <label>País<input value={country} onChange={(event) => setCountry(event.target.value)} /></label>
     </div>
 
     {isPsychologist ? <section className="professional-form stack" aria-labelledby="professional-profile-heading">
@@ -98,7 +107,17 @@ export function ProfilePage() {
         <label className="checkbox"><input type="checkbox" checked={professional.isPublicPhone === true} onChange={(event) => setProfessionalField('isPublicPhone', event.target.checked)} />Mostrar teléfono público tras aprobación</label>
         <label className="checkbox"><input type="checkbox" checked={professional.isPublicLocation === true} onChange={(event) => setProfessionalField('isPublicLocation', event.target.checked)} />Mostrar ciudad/estado tras aprobación</label>
       </div>
+      <div className="form-grid">
+        <label>Moneda<input maxLength={3} value={professional.currency ?? 'MXN'} onChange={(event) => setProfessionalField('currency', event.target.value.toUpperCase())} /></label>
+        <label className="checkbox"><input type="checkbox" checked={professional.isPublicPrice === true} onChange={(event) => setProfessionalField('isPublicPrice', event.target.checked)} />Mostrar precio público tras aprobación</label>
+        <label>Formación (una por línea)<textarea rows={3} value={(professional.education ?? []).join('\n')} onChange={(event) => setProfessionalField('education', event.target.value.split('\n').filter(Boolean))} /></label>
+        <label>Experiencia (una por línea)<textarea rows={3} value={(professional.experience ?? []).join('\n')} onChange={(event) => setProfessionalField('experience', event.target.value.split('\n').filter(Boolean))} /></label>
+        <label>Publicaciones (una por línea)<textarea rows={3} value={(professional.publications ?? []).join('\n')} onChange={(event) => setProfessionalField('publications', event.target.value.split('\n').filter(Boolean))} /></label>
+        <label>Áreas de investigación (separadas por coma)<input value={joinList(professional.researchAreas)} onChange={(event) => setProfessionalField('researchAreas', splitList(event.target.value))} /></label>
+        <label className="form-span">Enlaces profesionales (Etiqueta|https://…, uno por línea)<textarea rows={3} value={(professional.professionalLinks ?? []).map((link) => `${link.label}|${link.url}`).join('\n')} onChange={(event) => setProfessionalField('professionalLinks', event.target.value.split('\n').filter(Boolean).map((line) => { const [label, url] = line.split('|'); return { label: label ?? '', url: url ?? '' }; }))} /></label>
+      </div>
     </section> : null}
+    {isPsychologist && ['draft', 'changes_requested', 'rejected', 'pending'].includes(professionalStatus) ? <button className="secondary" onClick={() => void submitForReview()}>Enviar para revisión</button> : null}
     <div className="row-gap"><button disabled={saving} onClick={() => void save()}>{saving ? 'Guardando…' : 'Guardar cambios'}</button>{message ? <p role="status">{message}</p> : null}</div>
   </section>;
 }

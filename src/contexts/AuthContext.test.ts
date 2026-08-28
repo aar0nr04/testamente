@@ -9,4 +9,8 @@ describe('permissionClaimsFromToken', () => {
   it('does not derive administration from a profile-shaped token', () => {
     expect(permissionClaimsFromToken({ claims: { role: 'admin' } })).toEqual(emptyPermissionClaims);
   });
+
+  it('does not expose expired time-bound staff claims', () => {
+    expect(permissionClaimsFromToken({ claims: { admin: true, professional_reviewer: true, staff_expires_at: Date.now() - 1 } })).toEqual(emptyPermissionClaims);
+  });
 });

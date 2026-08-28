@@ -15,14 +15,16 @@ export const emptyPermissionClaims: PermissionClaims = { isOwner: false, isAdmin
 
 export function permissionClaimsFromToken(token: Pick<IdTokenResult, 'claims'> | { claims?: Record<string, unknown> } | undefined): PermissionClaims {
   const claims = token?.claims ?? {};
+  const active = typeof claims.staff_expires_at !== 'number' || claims.staff_expires_at > Date.now();
   return {
-    isOwner: claims.owner === true,
-    isAdmin: claims.admin === true,
-    isProfessionalReviewer: claims.professional_reviewer === true,
+    isOwner: claims.owner === true && active,
+    isAdmin: claims.admin === true && active,
+    isProfessionalReviewer: claims.professional_reviewer === true && active,
   };
 }
 
 interface AuthContextValue extends PermissionClaims {
+  hasStaffAccess: boolean;
   user: User | null;
   profile: UserProfile | null;
   loading: boolean;
@@ -89,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<AuthContextValue>(() => ({
-    user, profile, loading, error, ...claims,
+    user, profile, loading, error, ...claims, hasStaffAccess: claims.isOwner || claims.isAdmin || claims.isProfessionalReviewer,
     async login(email, password) {
       setError(null);
       const configuredAuth = requireAuth();
@@ -118,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ...(data.role === 'psychologist' ? { professional: {
           specialties: data.specialty ? [data.specialty] : [],
           languages: ['es'], modalities: ['online'], isPublicPhone: false, isPublicLocation: false,
-          availability: {}, isVerified: false, acceptingNewPatients: true, approvalStatus: 'pending',
+          availability: {}, isVerified: false, acceptingNewPatients: true, approvalStatus: 'draft',
           ...(data.licenseNumber ? { licenseNumber: data.licenseNumber } : {}),
           ...(data.description ? { description: data.description } : {}),
         } } : {}),
