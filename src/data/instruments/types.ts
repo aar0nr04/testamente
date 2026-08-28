@@ -104,6 +104,17 @@ export interface InstrumentScore {
   interpretation?: ScoreRange;
   alerts: { code: string; message: string }[];
   validationErrors: string[];
+  /** Deterministic per-item evidence used by the protected technical review UI. */
+  calculation: InstrumentCalculationItem[];
+}
+
+export interface InstrumentCalculationItem {
+  itemId: string;
+  response: AnswerValue;
+  rawValue?: number;
+  scoredValue?: number;
+  reverseApplied: boolean;
+  contributions: Record<string, number>;
 }
 
 export type InstrumentResultRecord = {

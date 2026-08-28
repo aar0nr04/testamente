@@ -61,7 +61,9 @@ export function RequirePermission({ anyOf, verified = true, requiresAppCheck = f
   if (!state.signedIn) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   if (verified && !state.emailVerified) return <Navigate to="/verify-email" replace />;
   if (requiresAppCheck && !state.appCheckReady) return <section className="panel narrow"><h1>App Check requerido</h1><p>Esta área protegida necesita App Check configurado antes de continuar.</p></section>;
-  if (!canAccessRoute(state, anyOf, verified, requiresAppCheck)) return <Navigate to="/" replace />;
+  if (!canAccessRoute(state, anyOf, verified, requiresAppCheck)) {
+    return <section className="panel narrow stack"><span className="eyebrow">Acceso protegido</span><h1>Necesitas autorización de revisión</h1><p>Tu cuenta ha iniciado sesión, pero no tiene una Custom Claim autorizada para esta área. Un owner debe conceder <code>professional_reviewer</code>, <code>admin</code> u <code>owner</code> mediante Admin SDK o una Function administrativa; el navegador no puede asignarla.</p><p>Después de concederla, cierra y abre sesión para renovar el token.</p></section>;
+  }
   return <Outlet />;
 }
 

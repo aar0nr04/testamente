@@ -13,6 +13,7 @@ describe('catalog questionnaire payloads', () => {
     expect(phq9?.questions).toHaveLength(9);
     expect(phq9?.algorithm?.items).toHaveLength(9);
     expect(getReviewTestById('gad-7', 'es')?.payloadAvailable).toBe(true);
+    expect(gad7?.reviewState).toBe('review_ready');
   });
 
   it('does not fall back to an unreviewed translation and preserves the public local check-in', () => {
@@ -23,6 +24,8 @@ describe('catalog questionnaire payloads', () => {
     expect(frenchGad7?.questions).toEqual([]);
     expect(localStress?.payloadAvailable).toBe(true);
     expect(localStress?.algorithm?.items).toHaveLength(4);
+    expect(getTestById('bai', 'es')?.reviewState).toBe('material_or_permission_blocked');
+    expect(getTestById('stroop', 'es')?.reviewState).toBe('not_implemented');
   });
 
   it('exposes only the source-backed English RSES payload for authorized review', () => {

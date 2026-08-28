@@ -1,6 +1,12 @@
 import type { InstrumentAlgorithm } from './types';
 
 const likertOptions = [0, 1, 2, 3].map((value) => ({ id: `${value}`, value }));
+const rsesOptions = [
+  { id: 'strongly_agree', value: 3 },
+  { id: 'agree', value: 2 },
+  { id: 'disagree', value: 1 },
+  { id: 'strongly_disagree', value: 0 },
+];
 const simpleItems = (prefix: string, count: number) => Array.from({ length: count }, (_, index) => ({ id: `${prefix}${index + 1}`, kind: 'likert' as const, options: likertOptions, min: 0, max: 3, scaleWeights: { total: 1 } }));
 
 export const gad7Algorithm: InstrumentAlgorithm = {
@@ -33,7 +39,7 @@ export const rsesAlgorithm: InstrumentAlgorithm = {
   items: Array.from({ length: 10 }, (_, index) => ({
     id: `rses${index + 1}`,
     kind: 'likert' as const,
-    options: likertOptions,
+    options: rsesOptions,
     min: 0,
     max: 3,
     reverse: [3, 5, 8, 9, 10].includes(index + 1),
